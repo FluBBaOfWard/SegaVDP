@@ -1,0 +1,1 @@
+#define SEGAVDPVERSION "V0.6.0"

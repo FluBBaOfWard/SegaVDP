@@ -1,0 +1,36 @@
+SegaVDP revision history
+-=-=-=-=-=-=-=-=-=-=-=-=-
+
+
+V0.6.0 - 2021-01-18 (FluBBa)
+	Added better palette handling.
+
+V0.5.1 - 2016-07-31 (FluBBa)
+	Changed to unified assembler style.
+
+V0.5.0 - 2015-05-19 (FluBBa)
+	Fixed palette bug for TMS9918 sprites.
+	Fixed possible hang in VDP loop.
+	Fixed sprite collision a bit.
+
+V0.4.0 - 2014-04-12 (FluBBa)
+	Added sprite overflow emulation.
+	Added sprite collision emulation.
+	Fixed defines for VDPTypes.
+	Moved VDP register reset to it's own function.
+
+V0.3.0 - 2012-05-01 (FluBBa)
+	Moved VDPSetMode to VDP struct.
+	Added TV type & GG mode flags to VDP struct.
+	Optimized size of read mem & ctrl write.
+	Optimized VIRQs.
+
+V0.2.0 - 2012-04-03 (FluBBa)
+	Optimized HIRQs.
+
+V0.1.0 - 2012-03-14 (FluBBa)
+	Moved VDP registers to struct.
+
+V0.0.0 - 2012-03-10 (FluBBa)
+	Started Coding.
+
