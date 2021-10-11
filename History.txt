@@ -2,7 +2,7 @@ SegaVDP revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.6.0 - 2021-01-18 (FluBBa)
+V0.6.0 - 2021-10-11 (FluBBa)
 	Added better palette handling.
 
 V0.5.1 - 2016-07-31 (FluBBa)

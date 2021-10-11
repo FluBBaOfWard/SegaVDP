@@ -12,8 +12,8 @@
 #define VDPSega3155378	(0x05)		/* GG VDP VA0, correct number or is it 5377? */
 //#define VDPSega3155487	(0x06)		/* Mega Drive 1/2 VDP (vdp & sound) (Yamaha FC1004) */
 //#define VDPSega3155535	(0x05)		/* GG VDP VA1, later version. */
-//#define VDPSega3155660	(0x06)		/* Mega Drive 2 VDP (vdp & sound)(Yamaha FC1004) */
 //#define VDPSega3155582	(0x05)		/* GG VDP, later version? */
+//#define VDPSega3155660	(0x06)		/* Mega Drive 2 VDP (vdp & sound)(Yamaha FC1004) */
 //#define VDPSega3155685	(0x08)		/* Mega Drive 2 VDP (Toshiba TC6158AF) */
 //#define VDPSega3155700	(0x07)		/* Nomad VDP (combined vdp, sound & Z80?)(Yamaha FF1004) */
 //#define VDPSega3155708	(0x06)		/* Mega Drive 1/2? (Yamaha FC1004) */
