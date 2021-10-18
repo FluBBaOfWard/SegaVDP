@@ -1,8 +1,6 @@
 SegaVDP To do
 --------------
 
-	Add load/save state!
-
 	Make pixel accurate sprite collision?
 		"Fantastic Dizzy" has a completely empty row that collides when it shows "damage" in the menu.
 	4 Sprites per row in TMS9918 mode.
@@ -11,8 +9,8 @@ SegaVDP To do
 
 	GG has a latch/buffer for palette writing thats not related to VRAM buffer?
 
-	Är skärmen centrerad i SMS mode på GG (när vänster border är på)?
-		Excellent Dizzy Collection - Highscore listan ligger för långt åt höger?
+	Is screen centered in SMS mode on GG (when left border is on)?
+		Excellent Dizzy Collection - Highscore list is too far right?
 	Fix scroll values for GG without border. Alladin.
 	Fix scaling of 8 right columns.
 	Fix 4k adressing for TMS9918?

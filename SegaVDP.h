@@ -102,6 +102,29 @@ typedef struct {
 
 
 void SegaVDPReset(int chiptype, SegaVDP *vdp);
+
+/**
+ * Saves the state of the cpu to the destination.
+ * @param  *destination: Where to save the state.
+ * @param  *vdp: The SegaVDP to save.
+ * @return The size of the state.
+ */
+int VDPSaveState(void *destination, const SegaVDP *vdp);
+
+/**
+ * Loads the state of the cpu from the source.
+ * @param  *vdp: The SegaVDP to load a state into.
+ * @param  *source: Where to load the state from.
+ * @return The size of the state.
+ */
+int VDPLoadState(SegaVDP *vdp, const void *source);
+
+/**
+ * Gets the state size of an SegaVDP state.
+ * @return The size of the state.
+ */
+int VDPGetStateSize(void);
+
 void SegaVDPMixer(SegaVDP *vdp);
 void SegaVDPWrite(SegaVDP *vdp, u8 value);
 

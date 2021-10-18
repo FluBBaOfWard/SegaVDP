@@ -6,6 +6,9 @@
 	.global VDPReset
 	.global VDPScanlineBPReset
 	.global VDPClearDirtyTiles
+	.global VDPSaveState
+	.global VDPLoadState
+	.global VDPGetStateSize
 
 	.global defaultScanlineHook
 	.global VDPNewFrame
@@ -70,6 +73,54 @@ VDPReset:	;@ Called from gfxReset, r0=vdp/tv type, r1=irq routine, r2 = debounce
 	bl earlyFrame
 
 	ldmfd sp!,{pc}
+;@----------------------------------------------------------------------------
+VDPSaveState:				;@ In r0=destination, r1=vdpptr. Out r0=size.
+	.type   VDPSaveState STT_FUNC
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4,r5,lr}
+	mov r4,r0					;@ Store destination
+	mov r5,r1					;@ Store vdpptr (r1)
+
+	ldr r1,[r5,#VRAMPtr]
+	mov r2,#0x4000
+	bl memcpy
+
+	add r0,r4,#0x4000
+	add r1,r5,#vdpState
+	mov r2,#VDPSTATESIZE
+	bl memcpy
+
+	ldmfd sp!,{r4,r5,lr}
+	ldr r0,=0x4000 + VDPSTATESIZE
+	bx lr
+;@----------------------------------------------------------------------------
+VDPLoadState:				;@ In r0=vdpptr, r1=source. Out r0=size.
+	.type   VDPLoadState STT_FUNC
+;@----------------------------------------------------------------------------
+	stmfd sp!,{r4,r5,lr}
+	mov r5,r0					;@ Store vdpptr (r0)
+	mov r4,r1					;@ Store source
+
+	ldr r0,[r5,#VRAMPtr]
+	mov r2,#0x4000
+	bl memcpy
+
+	add r0,r5,#vdpState
+	add r1,r4,#0x4000
+	mov r2,#VDPSTATESIZE
+	bl memcpy
+
+	mov vdpptr,r5
+	bl VDPClearDirtyTiles
+	bl paletteTxAll
+
+	ldmfd sp!,{r4,r5,lr}
+;@----------------------------------------------------------------------------
+VDPGetStateSize:			;@ Out r0=state size.
+	.type   VDPGetStateSize STT_FUNC
+;@----------------------------------------------------------------------------
+	ldr r0,=0x4000 + VDPSTATESIZE
+	bx lr
 ;@----------------------------------------------------------------------------
 VDPRegistersReset:
 ;@----------------------------------------------------------------------------
