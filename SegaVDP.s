@@ -1,3 +1,10 @@
+;@
+;@  SegaVDP.s
+;@  Sega VDP chip emulator for GBA/NDS.
+;@
+;@  Created by Fredrik Ahlström on 2012-03-10.
+;@  Copyright © 2012-2022 Fredrik Ahlström. All rights reserved.
+;@
 #ifdef __arm__
 
 #include "../ARMZ80/ARMZ80mac.h"

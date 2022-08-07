@@ -1,5 +1,10 @@
-/*
-*/
+//
+//  SegaVDP.h
+//  Sega VDP chip emulator for GBA/NDS.
+//
+//  Created by Fredrik Ahlström on 2012-03-10.
+//  Copyright © 2012-2022 Fredrik Ahlström. All rights reserved.
+//
 
 #ifndef SegaVDP_HEADER
 #define SegaVDP_HEADER
