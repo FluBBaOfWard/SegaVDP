@@ -9,7 +9,7 @@ SegaVDP To do
 
 	GG has a latch/buffer for palette writing thats not related to VRAM buffer?
 
-	Is screen centered in SMS mode on GG (when left border is on)?
+	Is screen centered in SMS mode on GG when left border is on?
 		Excellent Dizzy Collection - Highscore list is too far right?
 	Fix scroll values for GG without border. Alladin.
 	Fix scaling of 8 right columns.

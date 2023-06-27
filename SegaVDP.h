@@ -3,7 +3,7 @@
 //  Sega VDP chip emulator for GBA/NDS.
 //
 //  Created by Fredrik Ahlström on 2012-03-10.
-//  Copyright © 2012-2022 Fredrik Ahlström. All rights reserved.
+//  Copyright © 2012-2023 Fredrik Ahlström. All rights reserved.
 //
 
 #ifndef SegaVDP_HEADER
@@ -17,8 +17,10 @@ typedef struct {
 	u8 spritePosBuffer[0x20];
 	u8 vdpJumpTable[0x80];
 	u8 vdpCtrlTable[0x10];
-	u8 scrollBuff[320];					// Horizontal scrollbuffer.
-	u8 TMapBuff[320];					// Tilemap buffer.
+	/// Horizontal scrollbuffer.
+	u8 scrollBuff[320];
+	/// Tilemap buffer.
+	u8 TMapBuff[320];
 	u8 *VRAMPtr;
 	u8 *VRAMCopyPtr;
 	u8 *vdpModesPtr;
@@ -33,12 +35,15 @@ typedef struct {
 //vdpState:
 	u32 vdpAdr;
 	int vdpScanline;
-	u8 vdpBuff[2];						// vdpbuff + toggle need to be together in this way.
+	/// vdpbuff + toggle need to be together in this way.
+	u8 vdpBuff[2];
 	u8 vdpToggle[2];
 	u8 vdpBuffMD;
 	u8 vdpCtrl;
-	u8 vdpStat;							// VBlank + spr stat
-	u8 vdpPending;						// Line interrupt pending
+	/// VBlank + spr stat
+	u8 vdpStat;
+	/// Line interrupt pending
+	u8 vdpPending;
 
 	u8 vdpMode1;
 	u8 vdpMode2;
@@ -48,8 +53,10 @@ typedef struct {
 	u8 vdpSATOffset;
 	u8 vdpSPROffset;
 	u8 vdpBDColor;
-	u8 vdpXScroll;						// X scroll value
-	u8 vdpYScroll;						// Y scroll value
+	/// X scroll value
+	u8 vdpXScroll;
+	/// Y scroll value
+	u8 vdpYScroll;
 	u8 vdpCounter;
 	u8 vdpMode3;
 	u8 vdpMode4;
@@ -132,6 +139,5 @@ int VDPGetStateSize(void);
 
 void SegaVDPMixer(SegaVDP *vdp);
 void SegaVDPWrite(SegaVDP *vdp, u8 value);
-
 
 #endif

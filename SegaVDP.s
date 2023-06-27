@@ -3,7 +3,7 @@
 ;@  Sega VDP chip emulator for GBA/NDS.
 ;@
 ;@  Created by Fredrik Ahlström on 2012-03-10.
-;@  Copyright © 2012-2022 Fredrik Ahlström. All rights reserved.
+;@  Copyright © 2012-2023 Fredrik Ahlström. All rights reserved.
 ;@
 #ifdef __arm__
 
@@ -680,7 +680,7 @@ startVbl:							;@ 192/224/240
 
 ;@----------------------------------------
 VBL_Hook:							;@ 193/225/241
-	add cycles,cycles,#1*CYCLE
+	add z80cyc,z80cyc,#1*CYCLE
 	ldrb r0,[vdpptr,#vdpHCountBP]
 	strb r0,[vdpptr,#vdpHCountOffset]	;@ HC Latch need to be reset for the rest of the scanlines.
 	adr r0,borderScanlineHook
@@ -695,7 +695,7 @@ VBL_Hook:							;@ 193/225/241
 
 ;@----------------------------------------
 secondLastScanline:					;@ 261/312
-	add cycles,cycles,#1*CYCLE			;@ 'Pause' IRQ is 1 cycle after HBlank
+	add z80cyc,z80cyc,#1*CYCLE			;@ 'Pause' IRQ is 1 cycle after HBlank
 	ldrb r0,[vdpptr,#vdpHCountBP]
 	add r0,r0,#1
 	strb r0,[vdpptr,#vdpHCountOffset]	;@ HC Latch need to be reset for the rest of the scanlines.
@@ -739,7 +739,7 @@ VDPLatchHCounter:					;@ 228cpu=684master, r0 & r2 free to use.
 ;@-------------------------------------------------------------------------------
 ;@	mov r11,r11							;@ No$GBA breakpoint
 	ldrb r0,[vdpptr,#vdpHCountOffset]	;@ 27/26 cycles.
-	rsbs r0,r0,cycles,asr#CYC_SHIFT		;@ Tweak for OUT instruction taking some cycles before writing value to port.
+	rsbs r0,r0,z80cyc,asr#CYC_SHIFT		;@ Tweak for OUT instruction taking some cycles before writing value to port.
 	addmi r0,r0,#228
 	add r0,r0,r0,lsl#1					;@ cycle*3
 	rsb r0,r0,#600						;@ hc=(0xE9->0x93)
@@ -816,7 +816,7 @@ VDPStatR:
 	cmp r1,#0
 	bxeq lr
 
-	cmp cycles,#11*CYCLE
+	cmp z80cyc,#11*CYCLE
 	orrmi r0,r0,#0x80
 	strbmi rclr,[vdpptr,#vdpPrimedVBl]
 	bx lr
@@ -826,7 +826,7 @@ VDPVCounterR:
 ;@	mov r11,r11							;@ No$GBA breakpoint
 	ldr r0,[vdpptr,#vdpScanline]
 	ldrb r1,[vdpptr,#vdpVCountBP]
-	cmp cycles,r1,lsl#CYC_SHIFT
+	cmp z80cyc,r1,lsl#CYC_SHIFT
 	addcc r0,r0,#1						;@ Unsigned lower
 	ldr r1,[vdpptr,#vdpScanlineBP]
 	cmp r0,r1
@@ -1004,7 +1004,7 @@ VDPReg08W:							;@ Horizontal Scroll register
 	strb r1,[vdpptr,#vdpXScroll]
 	rsb r0,r0,#0
 
-	rsbs r2,cycles,#12*CYCLE
+	rsbs r2,z80cyc,#12*CYCLE
 	ldr r2,[vdpptr,#vdpScanline]		;@ r2=scanline
 	adc r2,r2,#0						;@ Also add carry if cycles < 11
 	cmp r2,#225

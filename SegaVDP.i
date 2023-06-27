@@ -3,7 +3,7 @@
 ;@  Sega VDP chip emulator for GBA/NDS.
 ;@
 ;@  Created by Fredrik Ahlström on 2012-03-10.
-;@  Copyright © 2012-2022 Fredrik Ahlström. All rights reserved.
+;@  Copyright © 2012-2023 Fredrik Ahlström. All rights reserved.
 ;@
 ;@ ASM header for the SegaVDP emulator
 ;@
@@ -60,99 +60,99 @@
 
 							;@ SegaVDP.s
 	.struct 0
-	dirtyTiles:			.space 0x200
-	vdpSpriteTileBuffer: .space 0x20
-	vdpSpritePosBuffer:	.space 0x20
-	vdpJumpTable:		.space 0x80	;@
-	vdpCtrlTable:		.space 0x10	;@
-	scrollBuff:			.space 320	;@ Horizontal scrollbuffer.
-	TMapBuff:			.space 320	;@ Tilemap buffer.
-	VRAMPtr:			.long 0
-	VRAMCopyPtr:		.long 0
-	vdpModesPtr:		.long 0
-	irqRoutine:			.long 0		;@
-	debounceRoutine:	.long 0
-	vdpScanlineHook:	.long 0
-	vdpTmpOAMBuffer:	.long 0
-	vdpDMAOAMBuffer:	.long 0
-	vdpDirtyTilesPtr:	.long 0
-						.space 0x0C
-	vdpState:						;@
-	vdpAdr:				.long 0
-	vdpScanline:		.long 0
-	vdpBuff:			.byte 0,0	;@ vdpbuff + toggle need to be together in this way.
-	vdpToggle:			.byte 0,0
-	vdpBuffMD:			.byte 0
-	vdpCtrl:			.byte 0
-	vdpStat:			.byte 0		;@ VBlank + spr stat
-	vdpPending:			.byte 0		;@ line interrupt pending
+dirtyTiles:			.space 0x200
+vdpSpriteTileBuffer: .space 0x20
+vdpSpritePosBuffer:	.space 0x20
+vdpJumpTable:		.space 0x80	;@
+vdpCtrlTable:		.space 0x10	;@
+scrollBuff:			.space 320	;@ Horizontal scrollbuffer.
+TMapBuff:			.space 320	;@ Tilemap buffer.
+VRAMPtr:			.long 0
+VRAMCopyPtr:		.long 0
+vdpModesPtr:		.long 0
+irqRoutine:			.long 0		;@
+debounceRoutine:	.long 0
+vdpScanlineHook:	.long 0
+vdpTmpOAMBuffer:	.long 0
+vdpDMAOAMBuffer:	.long 0
+vdpDirtyTilesPtr:	.long 0
+					.space 0x0C
+vdpState:						;@
+vdpAdr:				.long 0
+vdpScanline:		.long 0
+vdpBuff:			.byte 0,0	;@ vdpbuff + toggle need to be together in this way.
+vdpToggle:			.byte 0,0
+vdpBuffMD:			.byte 0
+vdpCtrl:			.byte 0
+vdpStat:			.byte 0		;@ VBlank + spr stat
+vdpPending:			.byte 0		;@ line interrupt pending
 
-	vdpRegisters:
-	vdpMode1:			.byte 0
-	vdpMode2:			.byte 0
-	vdpNameTable:		.byte 0
-	vdpCTOffset:		.byte 0
-	vdpPGOffset:		.byte 0
-	vdpSATOffset:		.byte 0
-	vdpSPROffset:		.byte 0
-	vdpBDColor:			.byte 0
-	vdpXScroll:			.byte 0
-	vdpYScroll:			.byte 0
-	vdpCounter:			.byte 0
-	vdpMode3:			.byte 0
-	vdpMode4:			.byte 0
-	vdpHScrollAdr:		.byte 0
-	vdpReg0E:			.byte 0
-	vdpReg0F:			.byte 0
-	vdpMDRegs:			.space 0x10
-	vdpRegistersSize:
+vdpRegisters:
+vdpMode1:			.byte 0
+vdpMode2:			.byte 0
+vdpNameTable:		.byte 0
+vdpCTOffset:		.byte 0
+vdpPGOffset:		.byte 0
+vdpSATOffset:		.byte 0
+vdpSPROffset:		.byte 0
+vdpBDColor:			.byte 0
+vdpXScroll:			.byte 0
+vdpYScroll:			.byte 0
+vdpCounter:			.byte 0
+vdpMode3:			.byte 0
+vdpMode4:			.byte 0
+vdpHScrollAdr:		.byte 0
+vdpReg0E:			.byte 0
+vdpReg0F:			.byte 0
+vdpMDRegs:			.space 0x10
+vdpRegistersSize:
 
-	vdpPaletteRAM:		.space 0x80
-	vdpHCountLatch:		.byte 0
-	vdpHCountOffset:	.byte 0
-	vdpHCountBP:		.byte 0
-	vdpVCountBP:		.byte 0
-	vdpNametableLine:	.long 0
-	vdpScrollXLine:		.long 0
-	vdpScanlineBP:		.long 0
-	vdpType:			.byte 0
-	vdpTVType:			.byte 0
-	vdpGGMode:			.byte 0
-	vdpMode2Bak1:		.byte 0
-	vdpMode2Bak2:		.byte 0
-	vdpYScrollBak1:		.byte 0
-	vdpPGOffsetBak1:	.byte 0
-	vdpRealMode:		.byte 0
-	vdpCalcMode:		.byte 0
-	vdpHeightMode:		.byte 0
-	vdpLineState:		.byte 0
-	vdpPrimedVBl:		.byte 0
-	vdpDebouncePin:		.byte 0
-	vdpNTMask:			.byte 0
-						.space 0x02
-	vdpScrollMask:		.long 0
-	vdpSprStop:			.long 0
-	vdpLineIRQ:			.long 0
-	vdpNextLineChange:	.long 0
-						.space 0x04
+vdpPaletteRAM:		.space 0x80
+vdpHCountLatch:		.byte 0
+vdpHCountOffset:	.byte 0
+vdpHCountBP:		.byte 0
+vdpVCountBP:		.byte 0
+vdpNametableLine:	.long 0
+vdpScrollXLine:		.long 0
+vdpScanlineBP:		.long 0
+vdpType:			.byte 0
+vdpTVType:			.byte 0
+vdpGGMode:			.byte 0
+vdpMode2Bak1:		.byte 0
+vdpMode2Bak2:		.byte 0
+vdpYScrollBak1:		.byte 0
+vdpPGOffsetBak1:	.byte 0
+vdpRealMode:		.byte 0
+vdpCalcMode:		.byte 0
+vdpHeightMode:		.byte 0
+vdpLineState:		.byte 0
+vdpPrimedVBl:		.byte 0
+vdpDebouncePin:		.byte 0
+vdpNTMask:			.byte 0
+					.space 0x02
+vdpScrollMask:		.long 0
+vdpSprStop:			.long 0
+vdpLineIRQ:			.long 0
+vdpNextLineChange:	.long 0
+					.space 0x04
 
-	vdpStateTable:
-	vdpZeroLine:		.long 0,0
-	vdpScrStartLine:	.long 0,0
-	vdpMidFrameLine:	.long 0,0
-	vdpEndFrameLine:	.long 0,0
-	vdpVBlLine:			.long 0,0
-	vdpVBlEndLine:		.long 0,0
-	vdp2ndLastScanline:	.long 0,0
-	vdpLastScanline:	.long 0,0
-	vdpTotalScanlines:	.long 0,0
-						.space 0x04
+vdpStateTable:
+vdpZeroLine:		.long 0,0
+vdpScrStartLine:	.long 0,0
+vdpMidFrameLine:	.long 0,0
+vdpEndFrameLine:	.long 0,0
+vdpVBlLine:			.long 0,0
+vdpVBlEndLine:		.long 0,0
+vdp2ndLastScanline:	.long 0,0
+vdpLastScanline:	.long 0,0
+vdpTotalScanlines:	.long 0,0
+					.space 0x04
 
-	vdpBgrMapOfs0:		.long 0
-	vdpBgrMapOfs1:		.long 0
-	vdpBgrTileOfs:		.long 0
-	vdpSprTileOfs:		.long 0
-	vdpSize:
+vdpBgrMapOfs0:		.long 0
+vdpBgrMapOfs1:		.long 0
+vdpBgrTileOfs:		.long 0
+vdpSprTileOfs:		.long 0
+vdpSize:
 
 ;@----------------------------------------------------------------------------
 
