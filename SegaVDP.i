@@ -9,29 +9,29 @@
 ;@
 
 //-----------------------------------------------------------vdp types
-#define VDPAUTO			(0x00)		/* Should not be used. */
-#define VDPTMS9918		(0x01)		/* SG-1000, SC-3000, OMV, Coleco & MSX VDP */
-#define VDPSega3155066	(0x01)		/* SG-1000 II VDP */
-#define VDPSega3155124	(0x02)		/* Mark III & SMS1 VDP */
-#define VDPSega3155246	(0x03)		/* SMS2 VDP */
-#define VDPSega3155313	(0x04)		/* Mega Drive VDP (YM7101 /FC1001) */
-//#define VDPSega3155315	(0x04)		/* Mega Drive / Pico VDP (YM7101 /FC1001) */
-#define VDPSega3155378	(0x05)		/* GG VDP VA0, correct number or is it 5377? */
-//#define VDPSega3155487	(0x06)		/* Mega Drive 1/2 VDP (vdp & sound) (Yamaha FC1004) */
-//#define VDPSega3155535	(0x05)		/* GG VDP VA1, later version. */
-//#define VDPSega3155582	(0x05)		/* GG VDP, later version? */
-//#define VDPSega3155660	(0x06)		/* Mega Drive 2 VDP (vdp & sound)(Yamaha FC1004) */
-//#define VDPSega3155685	(0x08)		/* Mega Drive 2 VDP (Toshiba TC6158AF) */
-//#define VDPSega3155700	(0x07)		/* Nomad VDP (combined vdp, sound & Z80?)(Yamaha FF1004) */
-//#define VDPSega3155708	(0x06)		/* Mega Drive 1/2? (Yamaha FC1004) */
-//#define VDPSega3155786	(0x08)		/* Mega Drive 2 VDP (Toshiba T9N13BF) */
-//#define VDPSega3155960	(0x09)		/* Mega Drive 2/3 VDP (combined vdp, sound & Z80?) (Yamaha FJ3002) */
-//#define VDPSega3156123	(0x0A)		/* Mega Drive 3 / Pico VDP (combined M68K, Z80, VDP, YM2612) (Yamaha FQ8007), column -1 scroll fixed? */
+#define VDPAUTO			(0x00)		// Should not be used.
+#define VDPTMS9918		(0x01)		// SG-1000, SC-3000, OMV, Coleco & MSX VDP
+#define VDPSega3155066	(0x01)		// SG-1000 II VDP, TMS9918 and SN76489 in the same package (but with RGB output?)
+#define VDPSega3155124	(0x02)		// Mark III & SMS1 VDP
+#define VDPSega3155246	(0x03)		// SMS2 VDP
+#define VDPSega3155313	(0x04)		// Mega Drive VDP (YM7101 /FC1001)
+//#define VDPSega3155315	(0x04)		// Mega Drive / Pico VDP (YM7101 /FC1001)
+#define VDPSega3155378	(0x05)		// GG VDP VA0, correct number or is it 5377?
+//#define VDPSega3155487	(0x06)		// Mega Drive 1/2 VDP (vdp & sound) (Yamaha FC1004)
+//#define VDPSega3155535	(0x05)		// GG VDP VA1, later version.
+//#define VDPSega3155582	(0x05)		// GG VDP, later version?
+//#define VDPSega3155660	(0x06)		// Mega Drive 2 VDP (vdp & sound)(Yamaha FC1004)
+//#define VDPSega3155685	(0x08)		// Mega Drive 2 VDP (Toshiba TC6158AF)
+//#define VDPSega3155700	(0x07)		// Nomad VDP (combined vdp, sound & Z80?)(Yamaha FF1004)
+//#define VDPSega3155708	(0x06)		// Mega Drive 1/2? (Yamaha FC1004)
+//#define VDPSega3155786	(0x08)		// Mega Drive 2 VDP (Toshiba T9N13BF)
+//#define VDPSega3155960	(0x09)		// Mega Drive 2/3 VDP (combined vdp, sound & Z80?) (Yamaha FJ3002)
+//#define VDPSega3156123	(0x0A)		// Mega Drive 3 / Pico VDP (combined M68K, Z80, VDP, YM2612) (Yamaha FQ8007), column -1 scroll fixed?
 
 #define VDPTYPE_MASK	(0x07)
 
-#define TVTYPEPAL		(0x80)	/* 0x00=NTSC 0x80=PAL timing */
-#define GGMODE			(0x40)	/* 0x00=normal 0x40=GG mode */
+#define TVTYPEPAL		(0x80)	// 0x00=NTSC 0x80=PAL timing
+#define GGMODE			(0x40)	// 0x00=normal 0x40=GG mode
 
 //-----------------------------------------------------------vdp modes
 #define VDPMODE_0		(0x00)
