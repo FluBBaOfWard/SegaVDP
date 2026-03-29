@@ -45,7 +45,11 @@
 	.syntax unified
 	.arm
 
-	.section .text
+#ifdef GBA
+	.section .ewram, "ax", %progbits	;@ For the GBA
+#else
+	.section .text						;@ For anything else
+#endif
 	.align 2
 ;@----------------------------------------------------------------------------
 VDPReset:	;@ Called from gfxReset, r0=vdp/tv type, r1=irq routine, r2 = debounce routine, r12 = vdpptr.
@@ -142,7 +146,8 @@ VDPRegistersReset:
 RegResetLoop:
 	ldrb r1,[r4],#1
 	ldr r2,[r5],#4
-	blx r2
+	mov lr,pc
+	bx r2
 	subs r6,r6,#1
 	bne RegResetLoop
 
@@ -502,9 +507,11 @@ line0Ret:
 	add r2,r2,#8
 	strb r2,[vdpptr,#vdpLineState]
 	add r1,vdpptr,#vdpStateTable-4
-	ldrd r0,r1,[r1,r2]
+	ldr r0,[r1,r2]!
+	ldr r1,[r1,#4]
 	str r1,[vdpptr,#vdpNextLineChange]
-	blxeq r0
+	moveq lr,pc
+	bxeq r0
 	ldr r1,[vdpptr,#vdpScanline]
 	b line0Ret
 
@@ -805,7 +812,8 @@ VDPStatR:
 	stmfd sp!,{vdpptr,lr}
 	mov r0,#0
 	ldr r1,[vdpptr,#irqRoutine]			;@ Clear IRQ/NMI pin on CPU
-	blx r1
+	mov lr,pc
+	bx r1
 	ldmfd sp!,{vdpptr,lr}
 	strb rclr,[vdpptr,#vdpToggle]
 	ldrb r0,[vdpptr,#vdpStat]
