@@ -3,10 +3,13 @@
 ;@  Sega VDP chip emulator for GBA/NDS.
 ;@
 ;@  Created by Fredrik Ahlström on 2012-03-10.
-;@  Copyright © 2012-2023 Fredrik Ahlström. All rights reserved.
+;@  Copyright © 2012-2026 Fredrik Ahlström. All rights reserved.
 ;@
 ;@ ASM header for the SegaVDP emulator
 ;@
+
+/** Game screen width in pixels */
+#define GAME_WIDTH  (256)
 
 //-----------------------------------------------------------vdp types
 #define VDPAUTO			(0x00)		// Should not be used.
@@ -62,8 +65,8 @@
 	.struct 0
 dirtyTiles:			.space 0x200
 vdpSpriteTileBuffer: .space 0x20
-vdpSpritePosBuffer:	.space 0x20
-vdpJumpTable:		.space 0x80	;@
+vdpSpritePosBuffer:	.space 8*4
+vdpJumpTable:		.space 0x20*4	;@
 vdpCtrlTable:		.space 0x10	;@
 scrollBuff:			.space 320	;@ Horizontal scrollbuffer.
 TMapBuff:			.space 320	;@ Tilemap buffer.
@@ -129,12 +132,14 @@ vdpLineState:		.byte 0
 vdpPrimedVBl:		.byte 0
 vdpDebouncePin:		.byte 0
 vdpNTMask:			.byte 0
-					.space 0x02
+vdpSprScan:			.byte 0
+					.skip 0x01
 vdpScrollMask:		.long 0
 vdpSprStop:			.long 0
 vdpLineIRQ:			.long 0
 vdpNextLineChange:	.long 0
-					.space 0x04
+					.skip 0x04
+vdpStateEnd:
 
 vdpStateTable:
 vdpZeroLine:		.long 0,0

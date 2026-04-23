@@ -3,7 +3,7 @@
 ;@  Sega VDP chip emulator for GBA/NDS.
 ;@
 ;@  Created by Fredrik Ahlström on 2012-03-10.
-;@  Copyright © 2012-2023 Fredrik Ahlström. All rights reserved.
+;@  Copyright © 2012-2026 Fredrik Ahlström. All rights reserved.
 ;@
 #ifdef __arm__
 
@@ -11,6 +11,7 @@
 #include "SegaVDP.i"
 
 	.global VDPReset
+	.global VDPSetSprScan
 	.global VDPScanlineBPReset
 	.global VDPClearDirtyTiles
 	.global VDPSaveState
@@ -85,6 +86,11 @@ VDPReset:	;@ Called from gfxReset, r0=vdp/tv type, r1=irq routine, r2 = debounce
 
 	ldmfd sp!,{pc}
 ;@----------------------------------------------------------------------------
+VDPSetSprScan:				;@ In r0=on/off.
+;@----------------------------------------------------------------------------
+	strb r0,[vdpptr,#vdpSprScan]
+	bx lr
+;@----------------------------------------------------------------------------
 VDPSaveState:				;@ In r0=destination, r1=vdpptr. Out r0=size.
 	.type   VDPSaveState STT_FUNC
 ;@----------------------------------------------------------------------------
@@ -145,9 +151,8 @@ VDPRegistersReset:
 	ldrb r6,[r4],#1
 RegResetLoop:
 	ldrb r1,[r4],#1
-	ldr r2,[r5],#4
 	mov lr,pc
-	bx r2
+	ldr pc,[r5],#4
 	subs r6,r6,#1
 	bne RegResetLoop
 
@@ -312,7 +317,7 @@ VDPCtrlLoop:
 	bne VDPCtrlLoop
 
 	cmp r4,#VDPTMS9918
-	ldreq r1,=VDPctrl2W
+	ldreq r1,=VDPCtrl2W
 	streq r1,[vdpptr,#vdpCtrlTable + 0x0C]
 	mov r0,#0xE
 	cmpne r4,#VDPSega3155124
@@ -347,10 +352,10 @@ VDPRegsMD:
 	.long VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW
 	.long VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW
 VDPdest:
-	.long VDPctrl0W
-	.long VDPctrl1W
-	.long VDPctrl2W
-	.long VDPctrl3W
+	.long VDPCtrl0W
+	.long VDPCtrl1W
+	.long VDPCtrl2W
+	.long VDPCtrl3W
 VDPLineStateTable:
 	.long 0, VDPNewFrame			;@ vdpZeroLine
 	.long 0, earlyFrame				;@ vdpScrStartLine
@@ -493,6 +498,14 @@ VDPClearDirtyTiles:
 	b memclr_
 ;@----------------------------------------------------------------------------
 
+#ifdef NDS
+	.section .itcm, "ax", %progbits		;@ For the NDS ARM9
+#elif GBA
+	.section .iwram, "ax", %progbits	;@ For the GBA
+#else
+	.section .text						;@ For everything else
+#endif
+	.align 2
 ;@----------------------------------------
 VDPDoScanline:
 	stmfd sp!,{lr}
@@ -517,7 +530,9 @@ line0Ret:
 
 defaultScanlineHook:
 ;@----------------------------------------------------------------------------
-	bl SpriteParserM4
+	ldrb r0,[vdpptr,#vdpSprScan]
+	cmp r0,#0
+	blne SpriteParserM4
 checkScanlineIRQ:
 	ldr r0,[vdpptr,#vdpLineIRQ]
 	subs r0,r0,#1
@@ -534,8 +549,15 @@ frameEndHook:
 	mov r0,#1
 	ldmfd sp!,{pc}
 
+#ifdef GBA
+	.section .ewram, "ax", %progbits	;@ For the GBA
+#else
+	.section .text						;@ For anything else
+#endif
+	.align 2
 ;@----------------------------------------------------------------------------
 SpriteParserM4:					;@ in r1 = scanline
+;@ check spr collision & overflow.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{r1,r3-r10}
 
@@ -547,11 +569,8 @@ SpriteParserM4:					;@ in r1 = scanline
 	add r9,r9,r0,lsl#7
 	add r8,r9,#0x100
 
-//	ldrb r11,[vdpptr,#vdpSPROffset]	;@ First or second half of VRAM for sprites?
-//	and r11,r11,#4
-
-	mov r3,#0x08					;@ Normal sprite height.
 	ldrb r4,[vdpptr,#vdpMode2]
+	mov r3,#0x08					;@ Normal sprite height.
 	movs r0,r4,lsl#31				;@ Double pixels/8x16 size
 	movcs r3,#0x10					;@ 8x16 size
 	movmi r3,r3,lsl#1				;@ Double size pixels
@@ -588,6 +607,8 @@ sc0Loop:
 	rsbmi r2,r2,#0
 	movs r2,r2,lsr#3
 	bne sc0Loop
+//	ldrb r1,[vdpptr,#vdpSPROffset]	;@ First or second half of VRAM for sprites?
+//	and r1,r1,#4
 									;@ Do pixel check here, Fantastic Dizzy needs it for "damage display".
 	orr r10,r10,#0x20				;@ Collision flag.
 sc0End:
@@ -597,8 +618,8 @@ sc0End:
 
 sp0Add:
 	cmp r6,#0x8						;@ This should be 4 in TMS9918 mode.
-	ldrhmi r0,[r8,r7]				;@ MasterSystem OBJ, r0=Tile,Xpos.
-	strmi r0,[r5,r6,lsl#2]
+	ldrhmi r0,[r8,r7]				;@ MasterSystem OBJ, r0=Tile,XPos.
+	strmi r0,[r5,r6,lsl#2]			;@ Store XPos & tile for collision
 
 	addmi r6,r6,#1
 	bmi sp0Chk
@@ -608,14 +629,15 @@ sp0Add:
 ;@----------------------------------------------------------------------------
 VDPNewFrame:					;@ Called before line 0	(r0, r1 & r2 safe to use)
 ;@----------------------------------------------------------------------------
+#ifndef GBA
 	stmfd sp!,{r3-r11,lr}
 	bl transferVRAM
 	ldmfd sp!,{r3-r11,lr}
-
+#endif
 	mov r0,#0
 	str r0,[vdpptr,#vdpNametableLine]
 
-	adr r0,defaultScanlineHook
+	ldr r0,=defaultScanlineHook
 	str r0,[vdpptr,#vdpScanlineHook]
 
 	ldrb r0,[vdpptr,#vdpCounter]
@@ -690,7 +712,7 @@ VBL_Hook:							;@ 193/225/241
 	add z80cyc,z80cyc,#1*CYCLE
 	ldrb r0,[vdpptr,#vdpHCountBP]
 	strb r0,[vdpptr,#vdpHCountOffset]	;@ HC Latch need to be reset for the rest of the scanlines.
-	adr r0,borderScanlineHook
+	ldr r0,=borderScanlineHook
 	str r0,[vdpptr,#vdpScanlineHook]
 
 	ldrb r2,[vdpptr,#vdpPrimedVBl]
@@ -805,6 +827,15 @@ VDPSetMode:
 	strb r0,[vdpptr,#vdpScrStartLine]
 
 	b VDPCheckIRQ
+
+#ifdef NDS
+	.section .itcm, "ax", %progbits		;@ For the NDS ARM9
+#elif GBA
+	.section .iwram, "ax", %progbits	;@ For the GBA
+#else
+	.section .text						;@ For everything else
+#endif
+	.align 2
 ;@----------------------------------------------------------------------------
 VDPStatR:
 ;@----------------------------------------------------------------------------
@@ -846,7 +877,6 @@ VDPHCounterR:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[vdpptr,#vdpHCountLatch]
 	bx lr
-
 
 ;@----------------------------------------------------------------------------
 VDPCtrlMDW:
@@ -903,18 +933,18 @@ VDPDataR:
 	ldrb r0,[vdpptr,#vdpBuff]
 	ldr r1,[vdpptr,#vdpAdr]
 ;@----------------------------------------------------------------------------
-VDPctrl0W:							;@ Set read address, fill buffer.
+VDPCtrl0W:							;@ Set read address, fill buffer.
 ;@----------------------------------------------------------------------------
 	add r2,r1,#0x00040000
 	str r2,[vdpptr,#vdpAdr]
 	ldr r2,[vdpptr,#VRAMPtr]
 	ldrb r1,[r2,r1,lsr#18]
 	str r1,[vdpptr,#vdpBuff]			;@ Write to vdpbuffer and clear vdptoggle.
-VDPctrl1W:								;@ Set VRAM write adress
-VDPctrl3W:								;@ Set CRAM write adress
+VDPCtrl1W:								;@ Set VRAM write adress
+VDPCtrl3W:								;@ Set CRAM write adress
 	bx lr
 ;@----------------------------------------------------------------------------
-VDPctrl2W:							;@ Write to vdp registers.
+VDPCtrl2W:							;@ Write to vdp registers.
 ;@----------------------------------------------------------------------------
 	mov r1,r1,lsr#18
 	and r0,r1,#0x1F00
