@@ -81,14 +81,15 @@ vdpDMAOAMBuffer:	.long 0
 vdpDirtyTilesPtr:	.long 0
 					.space 0x0C
 vdpState:						;@
+vdpCtrl:						;@ Ctrl in 2 lowest bits of Adr
 vdpAdr:				.long 0
 vdpScanline:		.long 0
 vdpBuff:			.byte 0,0	;@ vdpbuff + toggle need to be together in this way.
 vdpToggle:			.byte 0,0
 vdpBuffMD:			.byte 0
-vdpCtrl:			.byte 0
 vdpStat:			.byte 0		;@ VBlank + spr stat
 vdpPending:			.byte 0		;@ line interrupt pending
+					.skip 1
 
 vdpRegisters:
 vdpMode1:			.byte 0

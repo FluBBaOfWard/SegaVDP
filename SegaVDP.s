@@ -891,16 +891,14 @@ VDPCtrlMDW:
 	ldrb r1,[vdpptr,#vdpBuffMD]
 	orr r2,r1,r0,lsl#8
 	ldr r1,[vdpptr,#vdpAdr]
-	mov r1,r1,lsl#14
-	mov r1,r1,lsr#14
-	orr r1,r1,r2,lsl#18
+	mov r1,r2,ror#14
 	str r1,[vdpptr,#vdpAdr]
+	and r0,r1,#0x03
 
 	ldrb r2,[vdpptr,#vdpRealMode]
 	cmp r2,#VDPMODE_5
 	bne vdpCtrlBW
-	mov r2,r0,lsr#6
-	cmp r2,#2
+	cmp r0,#2
 	ldrbne r2,[vdpptr,#vdpToggle]
 	eorne r2,r2,#2
 	strbne r2,[vdpptr,#vdpToggle]
@@ -916,16 +914,15 @@ VDPCtrlW:
 
 	and r0,r0,#0xFF
 	ldr r1,[vdpptr,#vdpAdr]
-	biceq r1,r1,#0xFC000000
+	biceq r1,r1,#0xFC000003
 	bicne r1,r1,#0x03FC0000
-	orreq r1,r1,r0,lsl#26
+	orreq r1,r1,r0,ror#6
 	orrne r1,r1,r0,lsl#18
 	str r1,[vdpptr,#vdpAdr]
 	bxne lr
+	and r0,r1,#0x03						;@ #vdpCtrl
 vdpCtrlBW:
-	movs r0,r0,lsr#6
 	add r2,vdpptr,#vdpCtrlTable
-	strb r0,[vdpptr,#vdpCtrl]
 	ldr pc,[r2,r0,lsl#2]
 ;@----------------------------------------------------------------------------
 VDPDataR:
@@ -1101,7 +1098,7 @@ VDPDataSMSW:
 	str r2,[vdpptr,#vdpAdr]
 	str r0,[vdpptr,#vdpBuff]			;@ Write to vdpbuffer and clear vdptoggle.
 
-	ldrb r2,[vdpptr,#vdpCtrl]
+	and r2,r2,#0x03						;@ vdpCtrl
 	cmp r2,#0x03
 	beq CRAMW
 ;@----------------------------------------------------------------------------
@@ -1127,11 +1124,11 @@ CRAMW:
 ;@----------------------------------------------------------------------------
 VDPDataGGW:
 ;@----------------------------------------------------------------------------
-	ldrb r2,[vdpptr,#vdpCtrl]
-	cmp r2,#0x03
 	ldr r1,[vdpptr,#vdpAdr]
 	add r2,r1,#0x00040000
 	str r2,[vdpptr,#vdpAdr]
+	and r2,r2,#0x03						;@ vdpCtrl
+	cmp r2,#0x03
 	ldrbeq r2,[vdpptr,#vdpBuff]
 	str r0,[vdpptr,#vdpBuff]			;@ Write to vdpbuffer and clear vdptoggle.
 
@@ -1159,7 +1156,7 @@ VDPDataMDW:
 	str r2,[vdpptr,#vdpAdr]
 	strb rclr,[vdpptr,#vdpToggle]		;@ MD doesn't touch the vdpBuff on write
 
-	ldrb r2,[vdpptr,#vdpCtrl]
+	and r2,r2,#0x03						;@ vdpCtrl
 	tst r2,#0x02
 	beq VRAMW
 ;@----------------------------------------------------------------------------

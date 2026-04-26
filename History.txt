@@ -2,9 +2,10 @@ SegaVDP revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.7.2 - 2026-04-23 (FluBBa)
-	Removed ARM9 specific code.
+V0.7.2 - 2026-04-26 (FluBBa)
 	Added field for Sprite Scanning.
+	Optimized writing to VRAM/CRAM.
+	Removed ARM9 specific code.
 
 V0.7.1 - 2023-11-05 (FluBBa)
 	Some refactoring.
