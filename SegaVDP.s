@@ -19,6 +19,7 @@
 	.global VDPGetStateSize
 
 	.global defaultScanlineHook
+	.global sprsScanlineHook
 	.global VDPNewFrame
 	.global VDPDoScanline
 	.global VDPCheckIRQ
@@ -528,11 +529,11 @@ line0Ret:
 	ldr r1,[vdpptr,#vdpScanline]
 	b line0Ret
 
-defaultScanlineHook:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[vdpptr,#vdpSprScan]
-	cmp r0,#0
+sprsScanlineHook:
 	blne SpriteParserM4
+;@----------------------------------------------------------------------------
+defaultScanlineHook:
 checkScanlineIRQ:
 	ldr r0,[vdpptr,#vdpLineIRQ]
 	subs r0,r0,#1
@@ -559,19 +560,24 @@ frameEndHook:
 SpriteParserM4:					;@ in r1 = scanline
 ;@ check spr collision & overflow.
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r1,r3-r10}
+	ldrb r2,[vdpptr,#vdpMode2]
+	ldrb r0,[vdpptr,#vdpStat]
+	tst r2,#0x40					;@ Check if display is on.
+	tstne r0,#0x20					;@ Is collision already set?
+	bxeq lr
+
+	stmfd sp!,{r1,r3-r9}
+	mov r4,r0
 
 	sub r1,r1,#1
-	ldrb r10,[vdpptr,#vdpStat]
 	ldr r9,[vdpptr,#VRAMPtr]
 	ldrb r0,[vdpptr,#vdpSATOffset]
 	and r0,r0,#0x7E
 	add r9,r9,r0,lsl#7
 	add r8,r9,#0x100
 
-	ldrb r4,[vdpptr,#vdpMode2]
 	mov r3,#0x08					;@ Normal sprite height.
-	movs r0,r4,lsl#31				;@ Double pixels/8x16 size
+	movs r0,r2,lsl#31				;@ Double pixels/8x16 size
 	movcs r3,#0x10					;@ 8x16 size
 	movmi r3,r3,lsl#1				;@ Double size pixels
 
@@ -590,10 +596,6 @@ sp0Chk:
 	adds r7,r7,#2
 	bne sp0Loop
 sp0End:
-	tst r4,#0x40					;@ Check if display is on and then check for collision.
-	beq sc0End
-	tst r10,#0x20					;@ Is collision already set?
-	bne sc0End
 sc1Loop:
 	subs r6,r6,#1					;@ If there is only 1 sprite it can't collide with itself.
 	ble sc0End
@@ -610,10 +612,10 @@ sc0Loop:
 //	ldrb r1,[vdpptr,#vdpSPROffset]	;@ First or second half of VRAM for sprites?
 //	and r1,r1,#4
 									;@ Do pixel check here, Fantastic Dizzy needs it for "damage display".
-	orr r10,r10,#0x20				;@ Collision flag.
+	orr r4,r4,#0x20					;@ Collision flag.
 sc0End:
-	strb r10,[vdpptr,#vdpStat]
-	ldmfd sp!,{r1,r3-r10}
+	strb r4,[vdpptr,#vdpStat]
+	ldmfd sp!,{r1,r3-r9}
 	bx lr
 
 sp0Add:
@@ -623,7 +625,7 @@ sp0Add:
 
 	addmi r6,r6,#1
 	bmi sp0Chk
-	orr r10,r10,#0x40				;@ Overflow flag ( >8 sprites on a line).
+	orr r4,r4,#0x40					;@ Overflow flag ( >8 sprites on a line).
 	b sp0End
 
 ;@----------------------------------------------------------------------------
@@ -920,7 +922,7 @@ VDPCtrlW:
 	orrne r1,r1,r0,lsl#18
 	str r1,[vdpptr,#vdpAdr]
 	bxne lr
-	and r0,r1,#0x03						;@ #vdpCtrl
+	and r0,r1,#0x03						;@ vdpCtrl
 vdpCtrlBW:
 	add r2,vdpptr,#vdpCtrlTable
 	ldr pc,[r2,r0,lsl#2]
