@@ -637,7 +637,7 @@ VDPNewFrame:					;@ Called before line 0	(r0, r1 & r2 safe to use)
 	ldmfd sp!,{r3-r11,lr}
 #endif
 	mov r0,#0
-	str r0,[vdpptr,#vdpNametableLine]
+	str r0,[vdpptr,#vdpRegWriteLine]
 
 	ldr r0,=defaultScanlineHook
 	str r0,[vdpptr,#vdpScanlineHook]
@@ -654,28 +654,30 @@ VDPNewFrame:					;@ Called before line 0	(r0, r1 & r2 safe to use)
 	ldrb r0,[vdpptr,#vdpMode1]
 	ands r0,r0,#0x40
 	movne r0,#15					;@ 16 topmost lines frozen.
-	str r0,[vdpptr,#vdpScrollXLine]
+	str r0,[vdpptr,#vdpRegWriteLine]
 
 	add r0,vdpptr,#scrollBuff
-	ldrb r1,[vdpptr,#vdpXScroll]
-	rsb r1,r1,#0
-	strbeq r1,[r0]
-	ldrne r1,=0x00000000
-	movne r2,#16/4
+	ldrb r2,[vdpptr,#vdpXScroll]
+	ldrb r1,[vdpptr,#vdpNameTable]
+	subeq r1,r1,r2,lsl#8
+	strheq r1,[r0]
+	bxeq lr
+	orrne r1,r1,r1,lsl#16
+	movne r2,#16/2
 	bne memset_
-
-	bx lr
 ;@-------------------------------------------------------------------------------
 mode03_newframe:
 ;@-------------------------------------------------------------------------------
 	mov r0,#191
-	str r0,[vdpptr,#vdpScrollXLine]
+	str r0,[vdpptr,#vdpRegWriteLine]
 
 	mov r0,#0
 	strb r0,[vdpptr,#vdpYScrollBak1]
 	add r0,vdpptr,#scrollBuff
-	mov r1,#192/4
-	b memclr_
+	ldrb r2,[vdpptr,#vdpNameTable]
+	orr r2,r2,r2,lsl#16
+	mov r1,#192/2
+	b memset_
 
 ;@----------------------------------------------------------------------------
 midFrame:							;@ Called at line 96
@@ -968,24 +970,10 @@ VDPReg01W:
 VDPReg02W:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[vdpptr,#vdpNameTable]
+	ldrb r2,[vdpptr,#vdpXScroll]
 	strb r1,[vdpptr,#vdpNameTable]
-
-	ldr r2,[vdpptr,#vdpScanline]		;@ r2=scanline
-ntFinnish:
-	cmp r2,#224
-	movhi r2,#224
-	ldr r1,[vdpptr,#vdpNametableLine]
-	str r2,[vdpptr,#vdpNametableLine]
-	sub r1,r1,r2
-
-	add r2,r2,vdpptr
-	add r2,r2,#TMapBuff
-nt1:
-	strb r0,[r2],#-1					;@ Fill backwards from scanline to lastline
-	adds r1,r1,#1
-	ble nt1
-	bx lr
-
+	sub r0,r0,r2,lsl#8
+	b fillRegBuff
 ;@----------------------------------------------------------------------------
 VDPReg03W:							;@ Color Table - offset
 ;@----------------------------------------------------------------------------
@@ -1037,24 +1025,26 @@ VDPReg07W:							;@ Backdrop Color
 ;@----------------------------------------------------------------------------
 VDPReg08W:							;@ Horizontal Scroll register
 ;@----------------------------------------------------------------------------
-	ldrb r0,[vdpptr,#vdpXScroll]
+	ldrb r0,[vdpptr,#vdpNameTable]
+	ldrb r2,[vdpptr,#vdpXScroll]
 	strb r1,[vdpptr,#vdpXScroll]
-	rsb r0,r0,#0
+	sub r0,r0,r2,lsl#8
 
+fillRegBuff:
 	rsbs r2,z80cyc,#12*CYCLE
 	ldr r2,[vdpptr,#vdpScanline]		;@ r2=scanline
 	adc r2,r2,#0						;@ Also add carry if cycles < 11
-	cmp r2,#225
-	movhi r2,#225
-	ldr r1,[vdpptr,#vdpScrollXLine]
+	cmp r2,#240
+	movhi r2,#240
+	ldr r1,[vdpptr,#vdpRegWriteLine]
 	subs r1,r1,r2
-	strmi r2,[vdpptr,#vdpScrollXLine]
+	strmi r2,[vdpptr,#vdpRegWriteLine]
 
-	add r2,r2,vdpptr
+	add r2,vdpptr,r2,lsl#1
 	add r2,r2,#scrollBuff
 sx1:
 	adds r1,r1,#1
-	strble r0,[r2],#-1					;@ Fill backwards from scanline to lastline
+	strhle r0,[r2],#-2					;@ Fill backwards from scanline to lastline
 	bmi sx1
 	bx lr
 

@@ -20,10 +20,8 @@ typedef struct {
 	u32 spritePosBuffer[8];
 	void (*jumpTable[0x20])(void);
 	u8 ctrlTable[0x10];
-	/// Horizontal scrollbuffer.
-	u8 scrollBuff[320];
-	/// Tilemap buffer.
-	u8 TMapBuff[320];
+	/// Horizontal scrollbuffer/ Tilemap buffer.
+	u8 scrollTMapBuff[320*2];
 	u8 *VRAMPtr;
 	u8 *VRAMCopyPtr;
 	u8 *modesPtr;
@@ -73,8 +71,7 @@ typedef struct {
 	u8 hCountOffset;
 	u8 hCountBP;
 	u8 vCountBP;
-	u32 nametableLine;
-	u32 scrollXLine;
+	u32 regWriteLine;
 	u32 scanlineBP;
 	u8 type;
 	u8 tvType;
@@ -97,7 +94,7 @@ typedef struct {
 	u32 sprStop;
 	u32 lineIRQ;
 	u32 nextLineChange;
-	u32 padding2[1];
+	u32 padding2[2];
 
 //vdpStateTable:
 	u32 zeroLine[2];

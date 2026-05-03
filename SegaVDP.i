@@ -68,8 +68,8 @@ vdpSpriteTileBuffer: .space 0x20
 vdpSpritePosBuffer:	.space 8*4
 vdpJumpTable:		.space 0x20*4	;@
 vdpCtrlTable:		.space 0x10	;@
-scrollBuff:			.space 320	;@ Horizontal scrollbuffer.
-TMapBuff:			.space 320	;@ Tilemap buffer.
+TMapBuff:
+scrollBuff:			.space 320*2	;@ Horizontal scroll-/Tilemap-buffer.
 VRAMPtr:			.long 0
 VRAMCopyPtr:		.long 0
 vdpModesPtr:		.long 0
@@ -116,8 +116,7 @@ vdpHCountLatch:		.byte 0
 vdpHCountOffset:	.byte 0
 vdpHCountBP:		.byte 0
 vdpVCountBP:		.byte 0
-vdpNametableLine:	.long 0
-vdpScrollXLine:		.long 0
+vdpRegWriteLine:	.long 0
 vdpScanlineBP:		.long 0
 vdpType:			.byte 0
 vdpTVType:			.byte 0
@@ -139,7 +138,7 @@ vdpScrollMask:		.long 0
 vdpSprStop:			.long 0
 vdpLineIRQ:			.long 0
 vdpNextLineChange:	.long 0
-					.skip 0x04
+					.skip 0x08
 vdpStateEnd:
 
 vdpStateTable:
@@ -152,7 +151,7 @@ vdpVBlEndLine:		.long 0,0
 vdp2ndLastScanline:	.long 0,0
 vdpLastScanline:	.long 0,0
 vdpTotalScanlines:	.long 0,0
-					.space 0x04
+					.skip 0x04
 
 vdpBgrMapOfs0:		.long 0
 vdpBgrMapOfs1:		.long 0
