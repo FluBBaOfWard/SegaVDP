@@ -2,7 +2,7 @@ SegaVDP revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-V0.7.2 - 2026-05-03 (FluBBa)
+V0.7.2 - 2026-05-10 (FluBBa)
 	Added field for Sprite Scanning.
 	Optimized writing to VRAM/CRAM.
 	Optimized sprite collision check.

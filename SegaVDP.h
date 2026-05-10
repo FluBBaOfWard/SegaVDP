@@ -10,7 +10,18 @@
 #define SegaVDP_HEADER
 
 /** Game screen width in pixels */
-#define GAME_WIDTH  (256)
+#define GAME_WIDTH (256)
+/** Game screen height in pixels */
+#define GAME_HEIGHT (192)
+/** Game screen height in pixels */
+#define GAME_HEIGHT_224 (224)
+/** Game screen height in pixels */
+#define GAME_HEIGHT_240 (240)
+
+/** Game screen width on GameGear in pixels */
+#define GAME_WIDTH_GG (160)
+/** Game screen height on GameGear in pixels */
+#define GAME_HEIGHT_GG (144)
 
 #define VDPSTATESIZE	(0xE0)
 
