@@ -537,8 +537,7 @@ defaultScanlineHook:
 checkScanlineIRQ:
 	ldr r0,[vdpptr,#vdpLineIRQ]
 	subs r0,r0,#1
-	ldrbmi r0,[vdpptr,#vdpCounter]
-	str r0,[vdpptr,#vdpLineIRQ]
+	strpl r0,[vdpptr,#vdpLineIRQ]
 	blmi VDPSetHIRQ				;@ Scanline bit
 borderScanlineHook:
 	mov r0,#0
@@ -674,9 +673,9 @@ mode03_newframe:
 	mov r0,#0
 	strb r0,[vdpptr,#vdpYScrollBak1]
 	add r0,vdpptr,#scrollBuff
-	ldrb r2,[vdpptr,#vdpNameTable]
-	orr r2,r2,r2,lsl#16
-	mov r1,#GAME_HEIGHT/2
+	ldrb r1,[vdpptr,#vdpNameTable]
+	orr r1,r1,r1,lsl#16
+	mov r2,#GAME_HEIGHT/2
 	b memset_
 
 ;@----------------------------------------------------------------------------
@@ -750,6 +749,8 @@ lastScanline:						;@ 262/313
 ;@----------------------------------------------------------------------------
 VDPSetHIRQ:
 ;@----------------------------------------------------------------------------
+	ldrb r0,[vdpptr,#vdpCounter]
+	str r0,[vdpptr,#vdpLineIRQ]
 	mov r0,#0x40				;@ Scanline bit
 	strb r0,[vdpptr,#vdpPending]
 ;@----------------------------------------------------------------------------
@@ -931,8 +932,8 @@ vdpCtrlBW:
 ;@----------------------------------------------------------------------------
 VDPDataR:
 ;@----------------------------------------------------------------------------
-	ldrb r0,[vdpptr,#vdpBuff]
 	ldr r1,[vdpptr,#vdpAdr]
+	ldrb r0,[vdpptr,#vdpBuff]
 ;@----------------------------------------------------------------------------
 VDPCtrl0W:					;@ Set read address, fill buffer.
 ;@----------------------------------------------------------------------------
@@ -972,7 +973,6 @@ VDPReg02W:
 	ldrb r0,[vdpptr,#vdpNameTable]
 	ldrb r2,[vdpptr,#vdpXScroll]
 	strb r1,[vdpptr,#vdpNameTable]
-	sub r0,r0,r2,lsl#8
 	b fillRegBuff
 ;@----------------------------------------------------------------------------
 VDPReg03W:						;@ Color Table - offset
@@ -1028,11 +1028,11 @@ VDPReg08W:						;@ Horizontal Scroll register
 	ldrb r0,[vdpptr,#vdpNameTable]
 	ldrb r2,[vdpptr,#vdpXScroll]
 	strb r1,[vdpptr,#vdpXScroll]
-	sub r0,r0,r2,lsl#8
 
 fillRegBuff:
-	rsbs r2,z80cyc,#12*CYCLE
+	sub r0,r0,r2,lsl#8
 	ldr r2,[vdpptr,#vdpScanline]	;@ r2=scanline
+	rsbs r1,z80cyc,#12*CYCLE
 	adc r2,r2,#0					;@ Also add carry if cycles <= 12
 	cmp r2,#240
 	movhi r2,#240
