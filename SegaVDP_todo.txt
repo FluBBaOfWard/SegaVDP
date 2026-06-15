@@ -15,6 +15,11 @@ SegaVDP To do
 	Fix scaling of 8 right columns.
 	Fix 4k adressing for TMS9918?
 
+	MD
+		Add all registers.
+		Make better palette mapping.
+		Add DMA.
+
 	GG size =	4x3
 	DS size =	4x3
 

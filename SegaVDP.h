@@ -30,7 +30,7 @@ typedef struct {
 	u8 spriteTileBuffer[0x20];
 	u32 spritePosBuffer[8];
 	void (*jumpTable[0x20])(void);
-	u8 ctrlTable[0x10];
+	void (*ctrlTable[4])(void);
 	/// Horizontal scrollbuffer/ Tilemap buffer.
 	u8 scrollTMapBuff[320*2];
 	u8 *VRAMPtr;
@@ -45,13 +45,13 @@ typedef struct {
 	u8 padding0[0x0C];
 
 //vdpState:
-	u32 vdpAdr;
+	u32 vdpAdr;		// Also ctrl
 	int scanline;
-	/// vdpbuff + toggle need to be together in this way.
+	/// vdpBuff + toggle need to be together in this way.
 	u8 buff[2];
 	u8 toggle[2];
 	u8 buffMD;
-	u8 ctrl;
+	u8 padding1;
 	/// VBlank + spr stat
 	u8 stat;
 	/// Line interrupt pending
@@ -99,13 +99,13 @@ typedef struct {
 	u8 debouncePin;
 	u8 ntMask;
 	u8 sprScan;
-	u8 padding1[1];
+	u8 padding2[1];
 
 	u32 scrollMask;
 	u32 sprStop;
 	u32 lineIRQ;
 	u32 nextLineChange;
-	u32 padding2[2];
+	u32 padding3[2];
 
 //vdpStateTable:
 	u32 zeroLine[2];
@@ -117,7 +117,7 @@ typedef struct {
 	u32 secondLastScanline[2];
 	u32 lastScanline[2];
 	u32 totalScanlines[2];
-	u32 padding3[1];
+	u32 padding4[1];
 
 	u32 bgrMapOfs0;
 	u32 bgrMapOfs1;
@@ -150,7 +150,6 @@ int VDPLoadState(SegaVDP *vdp, const void *source);
  */
 int VDPGetStateSize(void);
 
-void SegaVDPMixer(SegaVDP *vdp);
 void SegaVDPWrite(SegaVDP *vdp, u8 value);
 
 #endif

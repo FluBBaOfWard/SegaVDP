@@ -78,7 +78,7 @@ dirtyTiles:			.space 0x200
 vdpSpriteTileBuffer: .space 0x20
 vdpSpritePosBuffer:	.space 8*4
 vdpJumpTable:		.space 0x20*4	;@
-vdpCtrlTable:		.space 0x10	;@
+vdpCtrlTable:		.space 4*4	;@
 TMapBuff:
 scrollBuff:			.space 320*2	;@ Horizontal scroll-/Tilemap-buffer.
 VRAMPtr:			.long 0
@@ -98,9 +98,9 @@ vdpScanline:		.long 0
 vdpBuff:			.byte 0,0	;@ vdpbuff + toggle need to be together in this way.
 vdpToggle:			.byte 0,0
 vdpBuffMD:			.byte 0
-vdpStat:			.byte 0		;@ VBlank + spr stat
-vdpPending:			.byte 0		;@ line interrupt pending
 					.skip 1
+vdpPending:			.byte 0		;@ line interrupt pending
+vdpStat:			.byte 0		;@ VBlank + spr stat
 
 vdpRegisters:
 vdpMode1:			.byte 0

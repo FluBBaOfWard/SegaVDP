@@ -2,6 +2,10 @@
 
 Sega 8bit VDP emulator for GBA/NDS.
 
+## How to use
+
+You can define "VDP_LOCAL" to get VDP0 version of methods.
+
 ## Projects that use this code
 
 * <https://github.com/FluBBaOfWard/S8DS>

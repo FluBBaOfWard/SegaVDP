@@ -27,7 +27,6 @@
 	.global VDPSetMode
 	.global VDPSetScanline
 
-	.global ntFinnish
 	.global VDPReg08W
 
 	.global VDPVCounterR
@@ -43,6 +42,19 @@
 
 	.global VDPGetRGBFromIndex
 	.global VDPGetRGBFromIndexSG
+
+#ifdef VDP_LOCAL
+	.global VDP0VCounterR
+	.global VDP0HCounterR
+	.global VDP0StatR
+	.global VDP0DataR
+	.global VDP0DataTMSW
+	.global VDP0DataSMSW
+	.global VDP0DataGGW
+	.global VDP0DataMDW
+	.global VDP0CtrlW
+	.global VDP0CtrlMDW
+#endif
 
 	.syntax unified
 	.arm
@@ -328,7 +340,7 @@ VDPCtrlLoop:
 	ldr r0,=vdpStateTable
 	add r0,vdpptr,r0
 	adr r1,VDPLineStateTable
-	mov r2,#18
+	mov r2,#9*2
 VDPLineStateLoop:
 	ldr r3,[r1],#4
 	str r3,[r0],#4
@@ -344,14 +356,14 @@ VDPRegsTMS9918:
 	.long VDPReg00W, VDPReg01W, VDPReg02W, VDPReg03W, VDPReg04W, VDPReg05W, VDPReg06W, VDPReg07W
 VDPRegsSMS:
 	.long VDPReg00W, VDPReg01W, VDPReg02W, VDPReg03W, VDPReg04W, VDPReg05W, VDPReg06W, VDPReg07W
-	.long VDPReg08W, VDPReg09W, VDPReg0AW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW
+	.long VDPReg08W, VDPReg09W, VDPReg0AW, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W
 	.long VDPReg00W, VDPReg01W, VDPReg02W, VDPReg03W, VDPReg04W, VDPReg05W, VDPReg06W, VDPReg07W
-	.long VDPReg08W, VDPReg09W, VDPReg0AW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW
+	.long VDPReg08W, VDPReg09W, VDPReg0AW, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W
 VDPRegsMD:
 	.long VDPReg00W, VDPReg01MDW, VDPReg02W, VDPReg03W, VDPReg04W, VDPReg05W, VDPReg06W, VDPReg07W
-	.long VDPReg08W, VDPReg09W, VDPReg0AW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW
-	.long VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW
-	.long VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW, VDPReg0FW
+	.long VDPReg08W, VDPReg09W, VDPReg0AW, VDPReg0BW, VDPReg0CW, VDPReg0DW, VDPReg0EW, VDPReg0FW
+	.long VDPReg10W, VDPReg11W, VDPReg12W, VDPReg13W, VDPReg14W, VDPReg15W, VDPReg16W, VDPReg17W
+	.long VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W, VDPReg__W
 VDPdest:
 	.long VDPCtrl0W
 	.long VDPCtrl1W
@@ -763,7 +775,7 @@ VDPCheckIRQ:
 
 	ldrbeq r2,[vdpptr,#vdpMode1]
 	ldrbeq r0,[vdpptr,#vdpPending]
-	andseq r0,r0,r2,lsl#2
+	andeq r0,r0,r2,lsl#2
 
 	ldr r2,[vdpptr,#irqRoutine]	;@ Set IRQ/NMI pin on CPU
 	bx r2
@@ -841,6 +853,12 @@ VDPSetMode:
 	.section .text						;@ For everything else
 #endif
 	.align 2
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0StatR:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPStatR:
 ;@----------------------------------------------------------------------------
@@ -864,6 +882,12 @@ VDPStatR:
 	orrmi r0,r0,#0x80
 	strbmi rclr,[vdpptr,#vdpPrimedVBl]
 	bx lr
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0VCounterR:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPVCounterR:
 ;@----------------------------------------------------------------------------
@@ -877,12 +901,24 @@ VDPVCounterR:
 	ldrhi r1,[vdpptr,#vdpTotalScanlines]
 	subhi r0,r0,r1
 	bx lr
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0HCounterR:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPHCounterR:
 ;@----------------------------------------------------------------------------
 	ldrb r0,[vdpptr,#vdpHCountLatch]
 	bx lr
 
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0CtrlMDW:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPCtrlMDW:
 ;@----------------------------------------------------------------------------
@@ -910,6 +946,12 @@ VDPCtrlMDW:
 
 	b vdpCtrlBW
 
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0CtrlW:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPCtrlW:
 ;@----------------------------------------------------------------------------
@@ -929,6 +971,12 @@ VDPCtrlW:
 vdpCtrlBW:
 	add r2,vdpptr,#vdpCtrlTable
 	ldr pc,[r2,r0,lsl#2]
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0DataR:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPDataR:
 ;@----------------------------------------------------------------------------
@@ -941,7 +989,7 @@ VDPCtrl0W:					;@ Set read address, fill buffer.
 	str r2,[vdpptr,#vdpAdr]
 	ldr r2,[vdpptr,#VRAMPtr]
 	ldrb r1,[r2,r1,lsr#18]
-	str r1,[vdpptr,#vdpBuff]	;@ Write to vdpbuffer and clear vdptoggle.
+	str r1,[vdpptr,#vdpBuff]	;@ Write to vdpBuffer and clear vdpToggle.
 VDPCtrl1W:						;@ Set VRAM write adress
 VDPCtrl3W:						;@ Set CRAM write adress
 	bx lr
@@ -1057,31 +1105,60 @@ VDPReg09W:						;@ Vertical Scroll register
 VDPReg0AW:						;@ HBlank counter value
 ;@----------------------------------------------------------------------------
 	strb r1,[vdpptr,#vdpCounter]
-;@	bx lr
+	bx lr
 ;@----------------------------------------------------------------------------
-;@VDPReg0BW:					;@ MD, Mode Set Register No. 3
+VDPReg0BW:						;@ MD, Mode Set Register No. 3
 ;@----------------------------------------------------------------------------
-;@	bx lr
 ;@----------------------------------------------------------------------------
-;@VDPReg0CW:					;@ MD, Mode Set Register No. 4
+VDPReg0CW:						;@ MD, Mode Set Register No. 4
 ;@----------------------------------------------------------------------------
-;@	bx lr
 ;@----------------------------------------------------------------------------
-;@VDPReg0DW:					;@ MD, H Scroll Data Table Base Address
+VDPReg0DW:						;@ MD, H Scroll Data Table Base Address
 ;@----------------------------------------------------------------------------
-;@	bx lr
+;@----------------------------------------------------------------------------
+VDPReg0EW:						;@ MD, tile bit 16 for plane A & B
+;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
 VDPReg0FW:						;@ MD, Auto Increment Data
 ;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg10W:						;@ MD, Tile maps size.
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg11W:						;@ MD, horizontal split between plane A and window.
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg12W:						;@ MD, vertical split between plane A and window.
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg13W:						;@ MD, DMA length bit 7:0
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg14W:						;@ MD, DMA length bit 15:8
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg15W:						;@ MD, DMA source bit 8:1
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg16W:						;@ MD, DMA source bit 16:9
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg17W:						;@ MD, DMA control
+;@----------------------------------------------------------------------------
+;@----------------------------------------------------------------------------
+VDPReg__W:						;@ No reg
+;@----------------------------------------------------------------------------
 	bx lr
 ;@----------------------------------------------------------------------------
-;@VDPReg10W:					;@ MD, H Scroll Data Table Base Address
+
+
+
+#ifdef VDP_LOCAL
 ;@----------------------------------------------------------------------------
-;@	bx lr
+VDP0DataSMSW:
 ;@----------------------------------------------------------------------------
-
-
-
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPDataSMSW:
 ;@----------------------------------------------------------------------------
@@ -1110,9 +1187,15 @@ CRAMW:
 	orr r0,r2,r0,lsl#2
 	orr r0,r0,r0,lsl#2
 
-	movs r1,r1,lsr#18
+	mov r1,r1,lsr#18
 	b WritePal
 
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0DataGGW:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPDataGGW:
 ;@----------------------------------------------------------------------------
@@ -1140,6 +1223,12 @@ WritePal:
 	strh r0,[r2]
 	bx lr
 
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0DataMDW:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPDataMDW:
 ;@----------------------------------------------------------------------------
@@ -1188,6 +1277,12 @@ WritePalMD:
 	ldmfd sp!,{r3,r4}
 
 	bx lr
+#ifdef VDP_LOCAL
+;@----------------------------------------------------------------------------
+VDP0DataTMSW:
+;@----------------------------------------------------------------------------
+	ldr vdpptr,=VDP0
+#endif
 ;@----------------------------------------------------------------------------
 VDPDataTMSW:
 ;@----------------------------------------------------------------------------
