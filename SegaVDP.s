@@ -385,7 +385,6 @@ VDPSetScanline:				;@ in r0 = scanline
 	mov r1,#0
 	str r1,[vdpptr,#vdpNextLineChange]
 	strb r1,[vdpptr,#vdpLineState]
-	sub r0,r0,#1
 	str r0,[vdpptr,#vdpScanline]	;@ Set scanline
 	bx lr
 
@@ -557,9 +556,7 @@ borderScanlineHook:
 
 frameEndHook:
 	mov r0,#0
-	bl VDPSetScanline
-	mov r0,#1
-	ldmfd sp!,{pc}
+	b VDPSetScanline
 
 #ifdef GBA
 	.section .ewram, "ax", %progbits	;@ For the GBA
@@ -720,10 +717,23 @@ startVbl:							;@ 192/224/240
 
 	mov r0,#0x80						;@ Prime VBlank bit
 	strb r0,[vdpptr,#vdpPrimedVBl]
-	bx lr
+	adr lr,vblRet
+	stmfd sp!,{lr}
+	ldr pc,[vdpptr,#vdpScanlineHook]
+vblRet:
+	mov r0,#1							;@ Wait for host VBL here
+	ldmfd sp!,{pc}
 
 ;@----------------------------------------
 VBL_Hook:							;@ 193/225/241
+	stmfd sp!,{r3-r11,lr}
+	bl bgFinish
+#ifdef GBA
+	bl transferVRAM
+#else
+	bl delayVRAM
+#endif
+	ldmfd sp!,{r3-r11,lr}
 	add z80cyc,z80cyc,#1*CYCLE
 	ldrb r0,[vdpptr,#vdpHCountBP]
 	strb r0,[vdpptr,#vdpHCountOffset]	;@ HC Latch need to be reset for the rest of the scanlines.
