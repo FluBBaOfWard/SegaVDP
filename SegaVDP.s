@@ -639,11 +639,6 @@ sp0Add:
 ;@----------------------------------------------------------------------------
 VDPNewFrame:				;@ Called before line 0	(r0, r1 & r2 safe to use)
 ;@----------------------------------------------------------------------------
-#ifndef GBA
-	stmfd sp!,{r3-r11,lr}
-	bl transferVRAM
-	ldmfd sp!,{r3-r11,lr}
-#endif
 	mov r0,#0
 	str r0,[vdpptr,#vdpRegWriteLine]
 
@@ -664,9 +659,9 @@ VDPNewFrame:				;@ Called before line 0	(r0, r1 & r2 safe to use)
 	movne r0,#15				;@ 16 topmost lines frozen.
 	str r0,[vdpptr,#vdpRegWriteLine]
 
-	add r0,vdpptr,#scrollBuff
-	ldrb r2,[vdpptr,#vdpXScroll]
 	ldrb r1,[vdpptr,#vdpNameTable]
+	ldrbeq r2,[vdpptr,#vdpXScroll]
+	add r0,vdpptr,#scrollBuff
 	subeq r1,r1,r2,lsl#8
 	strheq r1,[r0]
 	bxeq lr
@@ -728,11 +723,7 @@ vblRet:
 VBL_Hook:							;@ 193/225/241
 	stmfd sp!,{r3-r11,lr}
 	bl bgFinish
-#ifdef GBA
 	bl transferVRAM
-#else
-	bl delayVRAM
-#endif
 	ldmfd sp!,{r3-r11,lr}
 	add z80cyc,z80cyc,#1*CYCLE
 	ldrb r0,[vdpptr,#vdpHCountBP]
