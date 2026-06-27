@@ -70,18 +70,35 @@ ppi:
 	.section .text						;@ For anything else
 #endif
 	.align 2
+;@------------------------------------------------------------------------------
+earlyFrame:					;@ Called at line 0,16 or 32	(r0,r2 safe to use)
+;@------------------------------------------------------------------------------
+	stmfd sp!,{r1,r3-r12,lr}
+
+	ldrb r0,[vdpptr,#vdpSprScan]
+	cmp r0,#0
+	ldreq r0,=defaultScanlineHook
+	ldrne r0,=spriteScanner
+	str r0,[vdpptr,#vdpScanlineHook]
+	adrne lr,earlyFrameEnd
+	bne spriteScannerStart
+
+	ldrb r0,[vdpptr,#vdpRealMode]
+	cmp r0,#VDPMODE_4
+	bleq sprDMADo0
+earlyFrameEnd:
+	ldmfd sp!,{r1,r3-r12,pc}
+
 ;@----------------------------------------------------------------------------
 transferVRAM:
 ;@----------------------------------------------------------------------------
-	stmfd sp!,{r12,lr}
-	add r4,vdpptr,#dirtyTiles
+	stmfd sp!,{lr}
 	ldr r5,[vdpptr,#VRAMPtr]
 	ldr r6,=CHRDecode
 	ldr r7,[vdpptr,#vdpBgrTileOfs]
 	ldr r8,[vdpptr,#vdpSprTileOfs]
 	add r7,r7,#BG_GFX
 	add r8,r8,#BG_GFX
-	mov r1,#0
 
 	ldrb r0,[vdpptr,#vdpRealMode]
 	cmp r0,#VDPMODE_4
@@ -90,13 +107,14 @@ transferVRAM:
 	beq transferVRAM_m5
 	ldrb r2,[vdpptr,#vdpMode2]
 	tst r2,#0x40				;@ Screen on?
-	ldmfdeq sp!,{r12,pc}
+	ldmfdeq sp!,{pc}
 #ifdef GBA
 	add r7,r7,#0x1800
 #endif
 	ldr r8,=0x11111111
-	ldrb r2,[vdpptr,#vdpPGOffsetBak1]
+	ldrb r1,[vdpptr,#vdpPGOffsetBak1]
 	ldrb r3,[vdpptr,#vdpCTOffset]
+	mov r1,r1,lsl#6
 	cmp r0,#VDPMODE_2
 	beq	transferVRAM_m2
 	cmp r0,#VDPMODE_0
@@ -110,14 +128,13 @@ transferVRAM:
 ;@----------------------------------------------------------------------------
 transferVRAM_m0:
 ;@----------------------------------------------------------------------------
-	and r1,r2,#0x07
+	and r1,r1,#0x1C0
 	add r11,r5,r3,lsl#6
 	ldrb r9,[vdpptr,r3,lsl#1]
 	orr r0,r9,#0x01
 	strb r0,[vdpptr,r3,lsl#1]
 	orr r9,r9,r9,lsl#8
 	orr r9,r9,r9,lsl#16
-	mov r1,r1,lsl#6
 	sub r7,r7,r1,lsl#7
 tileLoop0_0:
 	ldr r0,=0x01010101			;@ Dirtytiles mode 0 bgr.
@@ -146,8 +163,7 @@ tileLoop0_0:
 ;@----------------------------------------------------------------------------
 transferVRAM_m1:
 ;@----------------------------------------------------------------------------
-	and r1,r2,#0x07
-	mov r1,r1,lsl#6
+	and r1,r1,#0x1C0
 	sub r7,r7,r1,lsl#7
 	ldr r9,=0x02020202			;@ Dirtytiles mode 1 bgr.
 tileLoop1_0:
@@ -169,17 +185,16 @@ tileLoop1_0:
 	tst r1,#0x3F
 	bne tileLoop1_0
 
-	ldmfd sp!,{r12,pc}
+	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
 transferVRAM_m2:
 ;@----------------------------------------------------------------------------
-	and r2,r2,#0x04
+	and r1,r1,#0x100
 	and r3,r3,#0x80
 	add r11,r5,r3,lsl#6
 	add r4,vdpptr,r3,lsl#1
-	add vdpptr,vdpptr,r2,lsl#6
-	add r5,r5,r2,lsl#11
+	sub r7,r7,r1,lsl#7
 	ldr r9,=0x04040404			;@ Dirtytiles mode 2 bgr.
 tileLoop2_0:
 	ldr r10,[vdpptr,r1]			;@ DirtyTiles are first in VDP struct
@@ -201,14 +216,19 @@ tileLoop2_0:
 	tst r10,#0x04000000
 	bleq tileLoop2_2
 	add r1,r1,#1
-	cmp r1,#0xC0
+	tst r1,#0x3F
+	bne tileLoop2_0
+	and r0,r1,#0xC0
+	cmp r0,#0xC0
 	bne tileLoop2_0
 
+	sub r1,r1,#0xC0
+	add r7,r7,r1,lsl#7
 	b tileLoopSpr
 ;@----------------------------------------------------------------------------
 transferVRAM_m3:
 ;@----------------------------------------------------------------------------
-	and r1,r2,#0x07
+	and r1,r1,#0x1C0
 	ldr r9,=0x08080808			;@ Dirtytiles mode 3 bgr.
 	sub r7,r7,r1,lsl#9
 tileLoop3_0:
@@ -239,7 +259,6 @@ tileLoopSpr:				;@ Mode0, 2 & 3 sprites.
 #else
 	add r7,r7,#0x10800			;@ Sprites @ 0x06010800
 #endif
-	ldmfd sp!,{r12}
 	ldrb r1,[vdpptr,#vdpSPROffset]
 	ldr r5,[vdpptr,#VRAMPtr]
 	ldr r9,=0x10101010			;@ Dirtytiles mode 0, 2 & 3 spr.
@@ -323,6 +342,40 @@ tileLoop3_2:
 	bcc tileLoop3_2
 	bx lr
 
+;@----------------------------------------------------------------------------
+transferVRAM_m5:
+;@----------------------------------------------------------------------------
+	ldr r9,=0x40404040			;@ Dirtytiles mode5 bgr & spr
+	mov r1,#0
+tileLoop5_0:
+	ldr r10,[vdpptr,r1]
+	str r9,[vdpptr,r1]
+	tst r10,#0x00000040
+	bleq tileLoop5_1
+	add r1,r1,#1
+	tst r10,#0x00004000
+	bleq tileLoop5_1
+	add r1,r1,#1
+	tst r10,#0x00400000
+	bleq tileLoop5_1
+	add r1,r1,#1
+	tst r10,#0x40000000
+	bleq tileLoop5_1
+	add r1,r1,#1
+	cmp r1,#0x200
+	bne tileLoop5_0
+
+	ldmfd sp!,{pc}
+
+tileLoop5_1:
+	ldr r0,[r5,r1,ror#32-5]
+	str r0,[r7,r1,ror#32-5]
+	str r0,[r8,r1,ror#32-5]
+	adds r1,r1,#0x20000000
+	bcc tileLoop5_1
+
+	bx lr
+
 #ifdef NDS
 	.section .itcm, "ax", %progbits		;@ For the NDS ARM9
 #elif GBA
@@ -341,13 +394,13 @@ transferVRAM_m4:
 	mov r1,#0x200
 tl4pre:
 	subs r1,r1,#4
-	ldmfdmi sp!,{r12,pc}
+	ldmfdmi sp!,{pc}
 tileLoop4_0:
-	ldr r10,[r4,r1]
+	ldr r10,[vdpptr,r1]
 	bics r2,r9,r10
 	beq tl4pre
 	orr r2,r10,r9
-	str r2,[r4,r1]
+	str r2,[vdpptr,r1]
 	tst r10,#0x00000020
 	bleq tileLoop4_1
 	add r1,r1,#1
@@ -362,7 +415,7 @@ tileLoop4_0:
 	subs r1,r1,#7
 	bpl tileLoop4_0
 
-	ldmfd sp!,{r12,pc}
+	ldmfd sp!,{pc}
 
 tileLoop4_1:
 	ldr r0,[r5,r1,ror#32-5]
@@ -460,61 +513,6 @@ bgM4Row:
 	.section .text						;@ For anything else
 #endif
 	.align 2
-;@----------------------------------------------------------------------------
-transferVRAM_m5:
-;@----------------------------------------------------------------------------
-	ldr r9,=0x40404040			;@ Dirtytiles mode5 bgr & spr
-
-tileLoop5_0:
-	ldr r10,[r4]
-	str r9,[r4],#4
-	tst r10,#0x00000040
-	addne r1,r1,#0x20
-	bleq tileLoop5_1
-	tst r10,#0x00004000
-	addne r1,r1,#0x20
-	bleq tileLoop5_1
-	tst r10,#0x00400000
-	addne r1,r1,#0x20
-	bleq tileLoop5_1
-	tst r10,#0x40000000
-	addne r1,r1,#0x20
-	bleq tileLoop5_1
-	cmp r1,#0x4000
-	bne tileLoop5_0
-
-	ldmfd sp!,{r12,pc}
-
-tileLoop5_1:
-	ldr r0,[r5,r1]
-
-	str r0,[r7,r1]
-	str r0,[r8,r1]
-	add r1,r1,#4
-	tst r1,#0x1C
-	bne tileLoop5_1
-
-	bx lr
-
-;@------------------------------------------------------------------------------
-earlyFrame:					;@ Called at line 0,16 or 32	(r0,r2 safe to use)
-;@------------------------------------------------------------------------------
-	stmfd sp!,{r1,r3-r12,lr}
-
-	ldrb r0,[vdpptr,#vdpSprScan]
-	cmp r0,#0
-	ldreq r0,=defaultScanlineHook
-	ldrne r0,=spriteScanner
-	str r0,[vdpptr,#vdpScanlineHook]
-	adrne lr,earlyFrameEnd
-	bne spriteScannerStart
-
-	ldrb r0,[vdpptr,#vdpRealMode]
-	cmp r0,#VDPMODE_4
-	bleq sprDMADo0
-earlyFrameEnd:
-	ldmfd sp!,{r1,r3-r12,pc}
-
 ;@----------------------------------------------------------------------------
 bgFinish:					;@ End of frame...
 ;@----------------------------------------------------------------------------
