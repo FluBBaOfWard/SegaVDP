@@ -34,15 +34,13 @@ typedef struct {
 	/// Horizontal scrollbuffer/ Tilemap buffer.
 	u8 scrollTMapBuff[320*2];
 	u8 *VRAMPtr;
-	u8 *VRAMCopyPtr;
 	u8 *modesPtr;
 	void (*irqRoutine)(bool state);
 	void (*debounceRoutine)(bool state);
 	u8 *scanlineHook;
 	u8 *tmpOAMBuffer;
 	u8 *dmaOAMBuffer;
-	u8 *dirtyTilesPtr;
-	u8 padding0[0x0C];
+	u8 padding0[0x04];
 
 //vdpState:
 	u32 vdpAdr;		// Also ctrl

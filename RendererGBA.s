@@ -1,4 +1,5 @@
 #ifdef __arm__
+#if defined(GBA) || defined(NDS)
 
 #include "SegaVDP.i"
 
@@ -109,61 +110,63 @@ transferVRAM:
 ;@----------------------------------------------------------------------------
 transferVRAM_m0:
 ;@----------------------------------------------------------------------------
-	and r2,r2,#0x07
+	and r1,r2,#0x07
 	add r11,r5,r3,lsl#6
-	add r5,r5,r2,lsl#11
-	ldrb r9,[r4,r3,lsl#1]
+	ldrb r9,[vdpptr,r3,lsl#1]
 	orr r0,r9,#0x01
-	strb r0,[r4,r3,lsl#1]
+	strb r0,[vdpptr,r3,lsl#1]
 	orr r9,r9,r9,lsl#8
 	orr r9,r9,r9,lsl#16
-	add r4,r4,r2,lsl#6
+	mov r1,r1,lsl#6
+	sub r7,r7,r1,lsl#7
 tileLoop0_0:
 	ldr r0,=0x01010101			;@ Dirtytiles mode 0 bgr.
-	ldr r12,[r4]
-	orr r2,r12,r0
-	str r2,[r4],#4
-	and r12,r12,r9
-	tst r12,#0x00000001
-	addne r1,r1,#0x20
+	ldr r10,[vdpptr,r1]			;@ DirtyTiles are first in VDP struct
+	orr r2,r10,r0
+	str r2,[vdpptr,r1]
+	and r10,r10,r9
+	tst r10,#0x00000001
 	bleq tileLoop0_1
-	tst r12,#0x00000100
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00000100
 	bleq tileLoop0_1
-	tst r12,#0x00010000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00010000
 	bleq tileLoop0_1
-	tst r12,#0x01000000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x01000000
 	bleq tileLoop0_1
-	cmp r1,#0x800
+	add r1,r1,#1
+	tst r1,#0x3F
 	bne tileLoop0_0
 
+	sub r1,r1,#0x40
+	add r7,r7,r1,lsl#7
 	b tileLoopSpr
 ;@----------------------------------------------------------------------------
 transferVRAM_m1:
 ;@----------------------------------------------------------------------------
-	and r2,r2,#0x07
-	add r5,r5,r2,lsl#11
-	add r4,r4,r2,lsl#6
-	ldr r10,=0x02020202			;@ Dirtytiles mode 1 bgr.
+	and r1,r2,#0x07
+	mov r1,r1,lsl#6
+	sub r7,r7,r1,lsl#7
+	ldr r9,=0x02020202			;@ Dirtytiles mode 1 bgr.
 tileLoop1_0:
-	ldr r12,[r4]
-	orr r2,r12,r10
-	str r2,[r4],#4
-	tst r12,#0x00000002
-	addne r1,r1,#0x20
+	ldr r10,[vdpptr,r1]			;@ DirtyTiles are first in VDP struct
+	orr r2,r10,r9
+	str r2,[vdpptr,r1]
+	tst r10,#0x00000002
 	bleq tileLoop1_1
-	tst r12,#0x00000200
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00000200
 	bleq tileLoop1_1
-	tst r12,#0x00020000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00020000
 	bleq tileLoop1_1
-	tst r12,#0x02000000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x02000000
 	bleq tileLoop1_1
-	cmp r1,#0x0800
+	add r1,r1,#1
+	tst r1,#0x3F
 	bne tileLoop1_0
 
 	ldmfd sp!,{r12,pc}
@@ -174,97 +177,92 @@ transferVRAM_m2:
 	and r2,r2,#0x04
 	and r3,r3,#0x80
 	add r11,r5,r3,lsl#6
-	add r9,r4,r3,lsl#1
+	add r4,vdpptr,r3,lsl#1
+	add vdpptr,vdpptr,r2,lsl#6
 	add r5,r5,r2,lsl#11
-	add r4,r4,r2,lsl#6
-	ldr r10,=0x04040404			;@ Dirtytiles mode 2 bgr.
-
+	ldr r9,=0x04040404			;@ Dirtytiles mode 2 bgr.
 tileLoop2_0:
-	ldr r12,[r4]
-	orr r2,r12,r10
+	ldr r10,[vdpptr,r1]			;@ DirtyTiles are first in VDP struct
+	orr r2,r10,r9
+	str r2,[vdpptr,r1]
+	ldr r2,[r4]
+	and r10,r10,r2
+	orr r2,r2,r9
 	str r2,[r4],#4
-	ldr r2,[r9]
-	and r12,r12,r2
-	orr r2,r2,r10
-	str r2,[r9],#4
-	tst r12,#0x00000004
-	addne r1,r1,#0x20
+	tst r10,#0x00000004
 	bleq tileLoop2_2
-	tst r12,#0x00000400
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00000400
 	bleq tileLoop2_2
-	tst r12,#0x00040000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00040000
 	bleq tileLoop2_2
-	tst r12,#0x04000000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x04000000
 	bleq tileLoop2_2
-	cmp r1,#0x1800
+	add r1,r1,#1
+	cmp r1,#0xC0
 	bne tileLoop2_0
 
 	b tileLoopSpr
 ;@----------------------------------------------------------------------------
 transferVRAM_m3:
 ;@----------------------------------------------------------------------------
-	and r2,r2,#0x07
-	add r5,r5,r2,lsl#11
-	add r4,r4,r2,lsl#6
-	ldr r10,=0x08080808			;@ Dirtytiles mode 3 bgr.
+	and r1,r2,#0x07
+	ldr r9,=0x08080808			;@ Dirtytiles mode 3 bgr.
+	sub r7,r7,r1,lsl#9
 tileLoop3_0:
-	ldr r12,[r4]
-	orr r2,r12,r10
-	str r2,[r4],#4
-	tst r12,#0x00000008
-	addne r1,r1,#0x20
+	ldr r10,[vdpptr,r1]			;@ DirtyTiles are first in VDP struct
+	orr r2,r10,r9
+	str r2,[vdpptr,r1]
+	tst r10,#0x00000008
 	bleq tileLoop3_1
-	tst r12,#0x00000800
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00000800
 	bleq tileLoop3_1
-	tst r12,#0x00080000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x00080000
 	bleq tileLoop3_1
-	tst r12,#0x08000000
-	addne r1,r1,#0x20
+	add r1,r1,#1
+	tst r10,#0x08000000
 	bleq tileLoop3_1
-	cmp r1,#0x800
+	add r1,r1,#1
+	tst r1,#0x3F
 	bne tileLoop3_0
 
 ;@----------------------------------------------------------------------------
 tileLoopSpr:				;@ Mode0, 2 & 3 sprites.
 ;@----------------------------------------------------------------------------
-	ldmfd sp!,{r12}
-	ldr r9,=0x10101010			;@ Dirtytiles mode 0, 2 & 3 spr.
-	ldrb r1,[vdpptr,#vdpSPROffset]
-	and r1,r1,#0x07
-	mov r1,r1,lsl#11
-	add r4,vdpptr,#dirtyTiles
-	ldr r5,[vdpptr,#VRAMPtr]
-	add r4,r4,r1,lsr#5
 #ifdef NDS
 	add r7,r7,#0x400000			;@ Sprites @ 0x06406000
 	sub r7,r7,#0x2000			;@ Sprites @ 0x06406000
 #else
 	add r7,r7,#0x10800			;@ Sprites @ 0x06010800
 #endif
-	sub r7,r7,r1,lsl#2			;@ r1 is later added in the render loop.
-	add r8,r1,#0x800
+	ldmfd sp!,{r12}
+	ldrb r1,[vdpptr,#vdpSPROffset]
+	ldr r5,[vdpptr,#VRAMPtr]
+	ldr r9,=0x10101010			;@ Dirtytiles mode 0, 2 & 3 spr.
+	and r1,r1,#0x07
+	mov r1,r1,lsl#6
+	sub r7,r7,r1,lsl#7
 tileLoop2_1:
-	ldr r10,[r4]
+	ldr r10,[vdpptr,r1]			;@ DirtyTiles are first in VDP struct
 	orr r2,r10,r9
-	str r2,[r4],#4
+	str r2,[vdpptr,r1]
 	tst r10,#0x00000010
-	addne r1,r1,#0x20
 	bleq tileLoop1_1
+	add r1,r1,#1
 	tst r10,#0x00001000
-	addne r1,r1,#0x20
 	bleq tileLoop1_1
+	add r1,r1,#1
 	tst r10,#0x00100000
-	addne r1,r1,#0x20
 	bleq tileLoop1_1
+	add r1,r1,#1
 	tst r10,#0x10000000
-	addne r1,r1,#0x20
 	bleq tileLoop1_1
-	cmp r1,r8
+	add r1,r1,#1
+	tst r1,#0x3F
 	bne tileLoop2_1
 
 	ldmfd sp!,{pc}
@@ -272,60 +270,57 @@ tileLoop2_1:
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
 tileLoop0_1:
-	bic r2,r1,#0x1800
-	ldrb r2,[r11,r2,lsr#6]
+	and r2,r1,#0x3F
+	ldrb r2,[r11,r2,lsr#1]
 	mov r3,r2,lsr#4
 	and r2,r2,#0x0F
 tileLoop0_2:
-	ldrb r0,[r5,r1]
+	ldrb r0,[r5,r1,ror#32-5]
 	ldr r0,[r6,r0,lsl#2]
-	mul r10,r0,r3
+	mul r4,r0,r3
 	eor r0,r0,r8
-	mla r10,r0,r2,r10
-	str r10,[r7,r1,lsl#2]
-	add r1,r1,#1
-	tst r1,#0x1F
-	bne tileLoop0_2
+	mla r4,r0,r2,r4
+	str r4,[r7,r1,ror#32-7]
+	adds r1,r1,#0x08000000
+	bcc tileLoop0_2
 	bx lr
 
 tileLoop1_1:
-	ldrb r0,[r5,r1]
+	ldrb r0,[r5,r1,ror#32-5]
 	ldr r0,[r6,r0,lsl#2]
-	str r0,[r7,r1,lsl#2]
-	add r1,r1,#1
-	tst r1,#0x1F
-	bne tileLoop1_1
+	str r0,[r7,r1,ror#32-7]
+	adds r1,r1,#0x08000000
+	bcc tileLoop1_1
 	bx lr
 
 tileLoop2_2:
-	ldrb r2,[r11,r1]
-	ldrb r0,[r5,r1]
+	ldrb r2,[r11,r1,ror#32-5]
+	ldrb r0,[r5,r1,ror#32-5]
 	ldr r0,[r6,r0,lsl#2]
 	movs r3,r2,lsr#4
 	mulne r3,r0,r3
 	eor r0,r0,r8
 	ands r2,r2,#0x0F
 	mlane r3,r0,r2,r3
-	str r3,[r7,r1,lsl#2]
-	add r1,r1,#1
-	tst r1,#0x1F
-	bne tileLoop2_2
+	str r3,[r7,r1,ror#32-7]
+	adds r1,r1,#0x08000000
+	bcc tileLoop2_2
 	bx lr
 
 tileLoop3_1:
-	ldrb r0,[r5,r1]
+	add r11,r7,r1,ror#32-9
+tileLoop3_2:
+	ldrb r0,[r5,r1,ror#32-5]
 	mov r0,r0,ror#4
 	orr r0,r0,r0,lsr#12
 	orr r0,r0,r0,lsl#4
 	orr r0,r0,r0,lsl#8
-	add r11,r7,r1,lsl#4
 	str r0,[r11],#4
 	str r0,[r11],#4
 	str r0,[r11],#4
 	str r0,[r11],#4
-	add r1,r1,#1
-	tst r1,#0x1F
-	bne tileLoop3_1
+	adds r1,r1,#0x08000000
+	bcc tileLoop3_2
 	bx lr
 
 #ifdef NDS
@@ -520,7 +515,6 @@ earlyFrame:					;@ Called at line 0,16 or 32	(r0,r2 safe to use)
 earlyFrameEnd:
 	ldmfd sp!,{r1,r3-r12,pc}
 
-	.pool
 ;@----------------------------------------------------------------------------
 bgFinish:					;@ End of frame...
 ;@----------------------------------------------------------------------------
@@ -597,14 +591,14 @@ bgM1Row:
 	ldrh r1,[r3],#2				;@ Read from MasterSystem Tilemap RAM
 	orr r1,r1,r1,lsl#8
 	bic r1,r1,#0xFF00
-	orr r1,r1,r7				;@ Palette & tileoffset
+	add r1,r1,r7				;@ Palette & tileoffset
 
 	str r0,[r4,r7,lsr#17]		;@ Write to GBA/NDS Tilemap RAM, BGR color
 	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
 	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
 	adds r6,r6,#0x10000000		;@ 16
 	bcc bgM1Row
-	add r3,r3,#8
+	add r3,r3,#8				;@ 40 columns
 	subs r6,r6,#1
 	bne bgM1Loop
 bgModeB:
@@ -616,7 +610,7 @@ bgModeB:
 ;@	mov r0,#0
 ;@	ldr r7,=0x40004000
 ;@	ldr r9,=0x00020002
-bgMode02:						;@ Fake
+bgMode02:						;@ Mode 0 & 2
 
 bgM2Loop2:
 	bic r11,r7,r9
@@ -626,7 +620,7 @@ bgM2Loop:
 	bic r1,r1,#0xFF00
 	add r1,r1,r11				;@ Palette & tile offset.
 
-	str r0,[r4,r8,lsr#12]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	str r0,[r4,r9,lsr#12]		;@ Write to GBA/NDS Tilemap RAM, BGR color
 	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
 	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
 	adds r6,r6,#0x02000000		;@ 16*8
@@ -654,7 +648,7 @@ bgM3Loop:
 	bic r1,r1,#0xFF00
 	add r1,r7,r1,lsl#2			;@ Palette & tile offset.
 
-	str r0,[r4,r8,lsr#12]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	str r0,[r4,r8,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
 	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
 	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
 	adds r6,r6,#0x10000000		;@ 16
@@ -719,4 +713,5 @@ CHRDecode:
 #endif
 ;@----------------------------------------------------------------------------
 	.end
+#endif // #ifdef GBA || NDS
 #endif // #ifdef __arm__

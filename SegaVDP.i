@@ -82,15 +82,13 @@ vdpCtrlTable:		.space 4*4	;@
 TMapBuff:
 scrollBuff:			.space 320*2	;@ Horizontal scroll-/Tilemap-buffer.
 VRAMPtr:			.long 0
-VRAMCopyPtr:		.long 0
 vdpModesPtr:		.long 0
 irqRoutine:			.long 0		;@
 debounceRoutine:	.long 0
 vdpScanlineHook:	.long 0
 vdpTmpOAMBuffer:	.long 0
 vdpDMAOAMBuffer:	.long 0
-vdpDirtyTilesPtr:	.long 0
-					.space 0x0C
+					.skip 0x04
 vdpState:						;@
 vdpCtrl:						;@ Ctrl in 2 lowest bits of Adr
 vdpAdr:				.long 0
