@@ -123,13 +123,14 @@ transferVRAM:
 	beq	transferVRAM_m1
 	cmp r0,#VDPMODE_3
 	beq	transferVRAM_m3
-	ldmfd sp!,{r12,pc}
+	ldmfd sp!,{pc}
 
 ;@----------------------------------------------------------------------------
 transferVRAM_m0:
 ;@----------------------------------------------------------------------------
 	and r1,r1,#0x1C0
 	add r11,r5,r3,lsl#6
+	sub r11,r11,r1,lsr#1
 	ldrb r9,[vdpptr,r3,lsl#1]
 	orr r0,r9,#0x01
 	strb r0,[vdpptr,r3,lsl#1]
@@ -193,6 +194,7 @@ transferVRAM_m2:
 	and r1,r1,#0x100
 	and r3,r3,#0x80
 	add r11,r5,r3,lsl#6
+	sub r11,r11,r1,lsl#5
 	add r4,vdpptr,r3,lsl#1
 	sub r7,r7,r1,lsl#7
 	ldr r9,=0x04040404			;@ Dirtytiles mode 2 bgr.
@@ -289,16 +291,15 @@ tileLoop2_1:
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
 tileLoop0_1:
-	and r2,r1,#0x3F
-	ldrb r2,[r11,r2,lsr#1]
+	ldrb r2,[r11,r1,lsr#1]
 	mov r3,r2,lsr#4
 	and r2,r2,#0x0F
 tileLoop0_2:
 	ldrb r0,[r5,r1,ror#32-5]
 	ldr r0,[r6,r0,lsl#2]
-	mul r4,r0,r3
-	eor r0,r0,r8
-	mla r4,r0,r2,r4
+	mul r4,r3,r0
+	eors r0,r0,r8
+	mlane r4,r2,r0,r4
 	str r4,[r7,r1,ror#32-7]
 	adds r1,r1,#0x08000000
 	bcc tileLoop0_2
@@ -318,9 +319,9 @@ tileLoop2_2:
 	ldr r0,[r6,r0,lsl#2]
 	movs r3,r2,lsr#4
 	mulne r3,r0,r3
-	eor r0,r0,r8
-	ands r2,r2,#0x0F
-	mlane r3,r0,r2,r3
+	eors r0,r0,r8
+	andnes r2,r2,#0x0F
+	mlane r3,r2,r0,r3
 	str r3,[r7,r1,ror#32-7]
 	adds r1,r1,#0x08000000
 	bcc tileLoop2_2
@@ -609,7 +610,7 @@ bgModeB:
 ;@	ldr r7,=0x40004000
 ;@	ldr r9,=0x00020002
 bgMode02:						;@ Mode 0 & 2
-
+	mov r10,#0x1000
 bgM2Loop2:
 	bic r11,r7,r9
 bgM2Loop:
@@ -618,7 +619,7 @@ bgM2Loop:
 	bic r1,r1,#0xFF00
 	add r1,r1,r11				;@ Palette & tile offset.
 
-	str r0,[r4,r9,lsr#12]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	str r0,[r4,r10]				;@ Write to GBA/NDS Tilemap RAM, BGR color
 	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
 	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
 	adds r6,r6,#0x02000000		;@ 16*8
