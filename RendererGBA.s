@@ -97,8 +97,6 @@ transferVRAM:
 	ldr r6,=CHRDecode
 	ldr r7,[vdpptr,#vdpBgrTileOfs]
 	ldr r8,[vdpptr,#vdpSprTileOfs]
-	add r7,r7,#BG_GFX
-	add r8,r8,#BG_GFX
 
 	ldrb r0,[vdpptr,#vdpRealMode]
 	cmp r0,#VDPMODE_4
@@ -108,9 +106,6 @@ transferVRAM:
 	ldrb r2,[vdpptr,#vdpMode2]
 	tst r2,#0x40				;@ Screen on?
 	ldmfdeq sp!,{pc}
-#ifdef GBA
-	add r7,r7,#0x1800
-#endif
 	ldr r8,=0x11111111
 	ldrb r1,[vdpptr,#vdpPGOffsetBak1]
 	ldrb r3,[vdpptr,#vdpCTOffset]
@@ -255,12 +250,8 @@ tileLoop3_0:
 ;@----------------------------------------------------------------------------
 tileLoopSpr:				;@ Mode0, 2 & 3 sprites.
 ;@----------------------------------------------------------------------------
-#ifdef NDS
-	add r7,r7,#0x400000			;@ Sprites @ 0x06406000
-	sub r7,r7,#0x2000			;@ Sprites @ 0x06406000
-#else
-	add r7,r7,#0x10800			;@ Sprites @ 0x06010800
-#endif
+	ldr r7,[vdpptr,#vdpSprTileOfs]
+	add r7,r7,#0x2000			;@ Sprites @ 0x06016000/0x06402000
 	ldrb r1,[vdpptr,#vdpSPROffset]
 	ldr r5,[vdpptr,#VRAMPtr]
 	ldr r9,=0x10101010			;@ Dirtytiles mode 0, 2 & 3 spr.
@@ -388,9 +379,6 @@ tileLoop5_1:
 ;@----------------------------------------------------------------------------
 transferVRAM_m4:
 ;@----------------------------------------------------------------------------
-#ifdef GBA
-	add r7,r7,#0x3800
-#endif
 	ldr r9,=0x20202020			;@ Dirtytiles mode4 bgr & spr
 	mov r1,#0x200
 tl4pre:
@@ -441,72 +429,66 @@ tileLoop4_1:
 	bx lr
 
 ;@----------------------------------------------------------------------------
-;@bgMapFinish				;@ End of frame...
-;@----------------------------------------------------------------------------
+;@	r0 = Destination address
+;@	r1 = Source address
+;@	r2 = Tile offset
+;@	r3 = Row count
+;@	ldr r4,=0x00010001
 ;@	ldr r5,=0xF000F000
 ;@	ldr r6,=0x000003FF
-;@	ldr r7,=0x00010001
 ;@ MSB          LSB
 ;@ ---pcvhnnnnnnnnn
+;@----------------------------------------------------------------------------
 bgMode4:
-#ifdef GBA
-	ldr r2,=0x01C001C0
-#else
-	ldr r2,[vdpptr,#vdpBgrTileOfs]
-	and r2,r2,#0x4000
-	orr r2,r2,r2,lsl#16
-#endif
 bgM4Frame:
-	subs r9,r9,#1
+	subs r3,r3,#1
 	ldmfdmi sp!,{r3-r11,pc}
 
-	ldrb r1,[r8],#16
-	ldrb r0,[vdpptr,#vdpNTMask]
-	movs r0,r0,lsr#1
-	orrcs r1,r1,#0x01
-	ands r0,r0,r1,lsr#1
-	orr r0,lr,r0,lsl#5
-	biccc r0,r0,#0x10
+	ldrb r11,[r8],#16
+	ldrb r10,[vdpptr,#vdpNTMask]
+	movs r10,r10,lsr#1
+	orrcs r11,r11,#0x01
+	ands r10,r10,r11,lsr#1
+	orr r10,lr,r10,lsl#5
+	biccc r10,r10,#0x10
 
-//	ldr r3,=0x8080
-//	mov r4,r0,lsl#1
-//	ldrh r1,[vdpptr,r4]
-//	orr r3,r3,r1
-//	bics r1,r3,r1
+//	ldr r9,=0x8080
+//	mov r7,r10,lsl#1
+//	ldrh r11,[vdpptr,r7]
+//	orr r9,r9,r11
+//	bics r11,r9,r11
 //	addeq lr,lr,#1
 //	beq bgM4Frame
-//	strh r3,[vdpptr,r4]
+//	strh r9,[vdpptr,r7]
 
-	add r3,r11,r0,lsl#6
-	add r4,r10,lr,lsl#6
+	add r9,r1,r10,lsl#6
+	add r7,r0,lr,lsl#6
 
 	add lr,lr,#1
-	ldr r0,[vdpptr,#vdpScrollMask]
-	cmp lr,r0,lsr#3
-	subpl lr,lr,r0,lsr#3
+	ldr r10,[vdpptr,#vdpScrollMask]
+	cmp lr,r10,lsr#3
+	subpl lr,lr,r10,lsr#3
 
 bgM4Row:
-	ldr r0,[r3],#4				;@ Read from MasterSystem Tilemap RAM
+	ldr r10,[r9],#4				;@ Read from MasterSystem Tilemap RAM
 
-	and r1,r7,r0,lsr#11
-	orr r1,r1,r7,lsl#1			;@ Bgr color 0x30 & 0x40
-	str r1,[r4,r7,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	and r11,r4,r10,lsr#11
+	orr r11,r11,r4,lsl#1			;@ Bgr color 0x30 & 0x40
+	str r11,[r7,r4,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
 
-	tst r7,r0,lsl#4				;@ Shift out top P bit, test low P bit.
-	bic r0,r0,r5
-	and r1,r0,r5,lsr#3
-	add r0,r0,r1				;@ XY flip + color.
+	tst r4,r10,lsl#4			;@ Shift out top P bit, test low P bit.
+	bic r10,r10,r5
+	and r11,r10,r5,lsr#3
+	add r10,r10,r11				;@ XY flip + color.
 
-	add r0,r0,r2				;@ New tile offset
-	str r0,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
-	biccc r0,r0,r6,lsl#16
-	biceq r0,r0,r6
-	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
-	tst r4,#0x3C				;@ 32 tiles wide
+	add r10,r10,r2				;@ New tile offset
+	str r10,[r7,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
+	biccc r10,r10,r6,lsl#16
+	biceq r10,r10,r6
+	str r10,[r7],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
+	tst r7,#0x3C				;@ 32 tiles wide
 	bne bgM4Row
 	b bgM4Frame
-
-	ldmfd sp!,{r3-r11,pc}
 
 #ifdef GBA
 	.section .ewram, "ax", %progbits	;@ For the GBA
@@ -523,183 +505,190 @@ bgFinish:					;@ End of frame...
 //	bxne lr
 	stmfd sp!,{r3-r11,lr}
 
-	mov r10,#BG_GFX
 	ldr r0,[vdpptr,#vdpBgrMapOfs0]
-	add r10,r10,r0,lsl#3
+	mov r1,#BG_GFX
+	add r0,r1,r0,lsl#3
+	ldr r2,[vdpptr,#vdpBgrTileOfs]
+	and r2,r2,#0x3FC0
+	mov r2,r2,lsr#5
+	orr r2,r2,r2,lsl#16
+	ldr r4,=0x00010001
 	ldr r5,=0xF000F000
 	ldr r6,=0x000003FF
-	ldr r7,=0x00010001
 	ldrb lr,[vdpptr,#vdpYScrollBak1]
-	and r0,lr,#7
+	and r10,lr,#7
 	mov lr,lr,lsr#3
-	rsbs r1,r0,#4
-	movmi r1,#0
+	rsbs r11,r10,#4
+	movmi r11,#0
 	add r8,vdpptr,#TMapBuff
-	ldrb r1,[r8,r1,lsl#1]!
-	ldrb r2,[vdpptr,#vdpHeightMode]
-	cmp r2,#VDPMODE_4_224
-	cmpne r2,#VDPMODE_4_240
-	ldr r11,[vdpptr,#VRAMPtr]
-	addeq r11,r11,#0x700
-	mov r9,#28
-	moveq r9,#32
+	ldrb r11,[r8,r11,lsl#1]!
+	ldrb r10,[vdpptr,#vdpHeightMode]
+	cmp r10,#VDPMODE_4_224
+	cmpne r10,#VDPMODE_4_240
+	ldr r1,[vdpptr,#VRAMPtr]
+	addeq r1,r1,#0x700
+	mov r3,#28
+	moveq r3,#32
 
-	and r2,r2,#0x0F
-	cmp r2,#VDPMODE_4
+	and r10,r10,#0x0F
+	cmp r10,#VDPMODE_4
 	beq bgMode4
-	cmp r2,#VDPMODE_5
+	cmp r10,#VDPMODE_5
 	beq bgMode5
 
-#ifdef NDS
-	ldr r7,=0x40004000			;@ Palette 4
-#else
-	ldr r7,=0x40C040C0			;@ Palette 4 & tileoffset
-#endif
-	ldrb r9,[vdpptr,#vdpPGOffsetBak1]
-	and r9,r9,#3
-	eor r9,r9,#3
-	orr r9,r9,r9,lsl#16
-	mov r9,r9,lsl#8
+	ldrb r7,[vdpptr,#vdpPGOffsetBak1]
+	and r7,r7,#3
+	eor r7,r7,#3
+	orr r7,r7,r7,lsl#16
+	mov r7,r7,lsl#8
 
-	and r1,r1,#0xF
-	add r3,r11,r1,lsl#10
+	and r11,r11,#0xF
+	add r1,r1,r11,lsl#10
 
-	mov r4,r10
-	mov r0,#0
-
-	mov r6,#3
-	mov r8,#0
-	cmp r2,#VDPMODE_2
-	ldreq r8,=0x01000100
-	cmpne r2,#VDPMODE_0
+	mov r5,#0
+	mov r6,#0
+	cmp r10,#VDPMODE_2
+	moveq r6,r4,lsl#8			;@ 0x01000100
+	cmpne r10,#VDPMODE_0
 	beq bgMode02
-	mov r6,#24
-	cmp r2,#VDPMODE_3
+	mov r3,#24
+	cmp r10,#VDPMODE_3
 	beq bgMode3
-	cmp r2,#VDPMODE_1
+	cmp r10,#VDPMODE_1
 	bne bgModeB
 ;@----------------------------------------------------------------------------
+;@	r0 = Destination address
+;@	r1 = Source address
+;@	r2 = Tile offset
+;@	r3 = Row count
+;@	r4 = 0x00010001
+;@	r5 = #0
+;@----------------------------------------------------------------------------
 bgMode1:
-#ifdef NDS
-	ldr r7,=0x20002000			;@ Palette 2
-#else
-	ldr r7,=0x20C020C0			;@ Palette 2 & tileoffset
-#endif
+	orr r2,r2,r4,lsl#13			;@ Palette 2
 bgM1Loop:
 bgM1Row:
-	ldrh r1,[r3],#2				;@ Read from MasterSystem Tilemap RAM
-	orr r1,r1,r1,lsl#8
-	bic r1,r1,#0xFF00
-	add r1,r1,r7				;@ Palette & tileoffset
+	ldrh r6,[r1],#2				;@ Read from MasterSystem Tilemap RAM
+	orr r6,r6,r6,lsl#8
+	bic r6,r6,#0xFF00
+	add r6,r6,r2				;@ Palette & tileoffset
 
-	str r0,[r4,r7,lsr#17]		;@ Write to GBA/NDS Tilemap RAM, BGR color
-	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
-	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
-	adds r6,r6,#0x10000000		;@ 16
+	str r5,[r0,r4,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	str r6,[r0,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
+	str r5,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
+	adds r3,r3,#0x10000000		;@ 16
 	bcc bgM1Row
-	add r3,r3,#8				;@ 40 columns
-	subs r6,r6,#1
+	add r1,r1,#8				;@ 40 columns
+	subs r3,r3,#1
 	bne bgM1Loop
 bgModeB:
 	ldmfd sp!,{r3-r11,pc}
 
 ;@----------------------------------------------------------------------------
-;@bgMapFinish				;@ End of frame...
+;@	r0 = Destination address
+;@	r1 = Source address
+;@	r2 = Tile offset
+;@	r4 = 0x00010001
+;@	r5 = #0
+;@	r6 = 0x00010001/0x00000000
+;@	r7 = 0x0M000M00
 ;@----------------------------------------------------------------------------
-;@	mov r0,#0
-;@	ldr r7,=0x40004000
-;@	ldr r9,=0x00020002
 bgMode02:						;@ Mode 0 & 2
-	mov r10,#0x1000
+	orr r2,r2,r4,lsl#14			;@ Palette 4
+	mov r3,#3
 bgM2Loop2:
-	bic r11,r7,r9
+	bic r8,r2,r7				;@ r7=Inverted mask
 bgM2Loop:
-	ldrh r1,[r3],#2				;@ Read from MasterSystem Tilemap RAM
-	orr r1,r1,r1,lsl#8
-	bic r1,r1,#0xFF00
-	add r1,r1,r11				;@ Palette & tile offset.
+	ldrh r9,[r1],#2				;@ Read from MasterSystem Tilemap RAM
+	orr r9,r9,r9,lsl#8
+	bic r9,r9,#0xFF00
+	add r9,r9,r8				;@ Palette & tile offset.
 
-	str r0,[r4,r10]				;@ Write to GBA/NDS Tilemap RAM, BGR color
-	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
-	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
-	adds r6,r6,#0x02000000		;@ 16*8
+	str r5,[r0,r4,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	str r9,[r0,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
+	str r5,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
+	adds r3,r3,#0x02000000		;@ 16*8
 	bcc bgM2Loop
-	add r7,r7,r8				;@ Add tileoffset for group.
-	subs r6,r6,#1
+	add r2,r2,r6				;@ Add tileoffset for group.
+	subs r3,r3,#1
 	bne bgM2Loop2
 
 	ldmfd sp!,{r3-r11,pc}
 
 ;@----------------------------------------------------------------------------
-;@bgMapFinish				;@ End of frame...
+;@	r0 = Destination address
+;@	r1 = Source address
+;@	r2 = Tile offset
+;@	r3 = Row count
+;@	r4 = 0x00010001
+;@	r5 = #0
 ;@----------------------------------------------------------------------------
-;@	mov r0,#0
-;@	ldr r7,=0x40004000
-;@	ldr r9,=0x00040004
 bgMode3:
-	ldr r8,=0x00010001
-	ldr r9,=0x00040004
+	orr r2,r2,r4,lsl#14			;@ Palette 4
 bgM3Loop2:
-	bic r7,r7,r9
+	bic r2,r2,r4,lsl#2
 bgM3Loop:
-	ldrh r1,[r3],#2				;@ Read from MasterSystem Tilemap RAM
-	orr r1,r1,r1,lsl#8
-	bic r1,r1,#0xFF00
-	add r1,r7,r1,lsl#2			;@ Palette & tile offset.
+	ldrh r6,[r1],#2				;@ Read from MasterSystem Tilemap RAM
+	orr r6,r6,r6,lsl#8
+	bic r6,r6,#0xFF00
+	add r6,r2,r6,lsl#2			;@ Palette & tile offset.
 
-	str r0,[r4,r8,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
-	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
-	str r0,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
-	adds r6,r6,#0x10000000		;@ 16
+	str r5,[r0,r4,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	str r6,[r0,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
+	str r5,[r0],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
+	adds r3,r3,#0x10000000		;@ 16
 	bcc bgM3Loop
-	add r7,r7,r8				;@ Add tileoffset for group.
-	subs r6,r6,#1
+	add r2,r2,r4				;@ Add tileoffset for group.
+	subs r3,r3,#1
 	bne bgM3Loop2
 
 	ldmfd sp!,{r3-r11,pc}
 
 ;@----------------------------------------------------------------------------
-bgMode5:
-	ldr r2,=0x01C001C0
-	ldr r5,=0xFC00FC00
-;@	ldr r6,=0x000003FF
+;@	r0 = Destination address
+;@	r1 = Source address
+;@	r2 = Tile offset
+;@	r3 = Row count
 ;@	ldr r7,=0x00010001
-;@	r10 = NDS destination address
+;@	ldr r6,=0x000003FF
 ;@	lr = y scroll row
 ;@	r11 = VDPRAM
 ;@ MSB          LSB
 ;@ pccvhnnnnnnnnnnn
+;@----------------------------------------------------------------------------
+bgMode5:
+	ldr r5,=0xFC00FC00
 bgM5Loop:
-	ldrb r0,[r8],#8
-	and r0,r0,#0x08				;@ 0x2000, should be 0x1C
-	orr r0,lr,r0,lsl#4
-	add r3,r11,r0,lsl#6
-	add r4,r10,lr,lsl#6
+	ldrb r6,[r8],#8
+	and r6,r6,#0x08				;@ 0x2000, should be 0x1C
+	orr r6,lr,r6,lsl#4
+	add r9,r1,r6,lsl#6
+	add r7,r0,lr,lsl#6
 
 	add lr,lr,#1
-;@	ldr r0,[vdpptr,#vdpScrollMask]
-	mov r0,#256
-	cmp lr,r0,lsr#3
-	subpl lr,lr,r0,lsr#3
+;@	ldr r6,[vdpptr,#vdpScrollMask]
+	mov r6,#256
+	cmp lr,r6,lsr#3
+	subpl lr,lr,r6,lsr#3
 
 bgM5Row:
-	ldr r0,[r3],#4				;@ Read from MegaDrive Tilemap RAM
+	ldr r6,[r9],#4				;@ Read from MegaDrive Tilemap RAM
 
-	and r1,r7,r0,lsr#11
-	str r1,[r4,r7,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
+	and r11,r4,r6,lsr#11
+	str r11,[r7,r4,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
 
-	bic r1,r0,r5
-	and r0,r5,r0,lsr#1
-	add r0,r0,r2				;@ Tile offset.
-	orr r0,r0,r7,lsl#15			;@ MD palette
-	orr r1,r1,r0				;@ XY flip + color.
+	bic r11,r6,r5
+	and r6,r5,r6,lsr#1
+	add r6,r6,r2				;@ Tile offset.
+	orr r6,r6,r4,lsl#15			;@ MD palette
+	orr r11,r11,r6				;@ XY flip + color.
 
-	str r1,[r4,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
-	mov r1,#0
-	str r1,[r4],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
-	tst r4,#0x3C				;@ 32 tiles wide
+	str r11,[r7,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
+	mov r11,#0
+	str r11,[r7],#4				;@ Write to GBA/NDS Tilemap RAM, in front of sprites
+	tst r7,#0x3C				;@ 32 tiles wide
 	bne bgM5Row
-	subs r9,r9,#1
+	subs r3,r3,#1
 	bne bgM5Loop
 
 	ldmfd sp!,{r3-r11,pc}
