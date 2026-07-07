@@ -5,8 +5,9 @@
 ;@  Created by Fredrik Ahlström on 2012-03-10.
 ;@  Copyright © 2012-2026 Fredrik Ahlström. All rights reserved.
 ;@
-;@ ASM header for the SegaVDP emulator
-;@
+#if !__ASSEMBLER__
+	#error This header file is only for use in assembly files!
+#endif
 
 /** Game screen width in pixels */
 #define GAME_WIDTH (256)

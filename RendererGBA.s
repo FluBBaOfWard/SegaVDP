@@ -523,14 +523,13 @@ bgFinish:					;@ End of frame...
 	add r8,vdpptr,#TMapBuff
 	ldrb r11,[r8,r11,lsl#1]!
 	ldrb r10,[vdpptr,#vdpHeightMode]
-	cmp r10,#VDPMODE_4_224
-	cmpne r10,#VDPMODE_4_240
 	ldr r1,[vdpptr,#VRAMPtr]
-	addeq r1,r1,#0x700
+	tst r10,#VDPMODE_HEIGHTMASK	;@ 224 and/or 240 height
+	addne r1,r1,#0x700
 	mov r3,#28
-	moveq r3,#32
+	movne r3,#32
 
-	and r10,r10,#0x0F
+	and r10,r10,#VDPMODE_MASK
 	cmp r10,#VDPMODE_4
 	beq bgMode4
 	cmp r10,#VDPMODE_5
