@@ -150,4 +150,4 @@ int VDPGetStateSize(void);
 
 void SegaVDPWrite(SegaVDP *vdp, u8 value);
 
-#endif
+#endif // !SegaVDP_HEADER

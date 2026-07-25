@@ -697,8 +697,8 @@ bgM5Row:
 	.align 2
 CHRDecode:
 	.space 0x400
-#endif
+#endif // NDS
 ;@----------------------------------------------------------------------------
 	.end
-#endif // #ifdef GBA || NDS
-#endif // #ifdef __arm__
+#endif // defined(GBA) || defined(NDS)
+#endif // __arm__
