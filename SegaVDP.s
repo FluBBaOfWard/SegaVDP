@@ -54,7 +54,7 @@
 	.global VDP0DataMDW
 	.global VDP0CtrlW
 	.global VDP0CtrlMDW
-#endif
+#endif // VDP_LOCAL
 
 	.syntax unified
 	.arm
@@ -332,9 +332,9 @@ VDPCtrlLoop:
 	cmp r4,#VDPTMS9918
 	ldreq r1,=VDPCtrl2W
 	streq r1,[vdpptr,#vdpCtrlTable + 0x0C]
-	mov r0,#0xE
-	cmpne r4,#VDPSega3155124
-	orrne r0,r0,#1
+	mov r0,#0x78					;@ Used to clear bits
+	cmpne r4,#VDPSega3155124		;@ SMS1 VDP?
+	orrne r0,r0,#0x80				;@ Used to set bit-0
 	strb r0,[vdpptr,#vdpNTMask]
 
 	ldr r0,=vdpStateTable
@@ -661,7 +661,7 @@ VDPNewFrame:				;@ Called before line 0	(r0, r1 & r2 safe to use)
 
 	ldrb r1,[vdpptr,#vdpNameTable]
 	ldrbeq r2,[vdpptr,#vdpXScroll]
-	add r0,vdpptr,#scrollBuff
+	add r0,vdpptr,#scrollTMapBuff
 	subeq r1,r1,r2,lsl#8
 	strheq r1,[r0]
 	bxeq lr
@@ -676,7 +676,7 @@ mode03_newframe:
 
 	mov r0,#0
 	strb r0,[vdpptr,#vdpYScrollBak1]
-	add r0,vdpptr,#scrollBuff
+	add r0,vdpptr,#scrollTMapBuff
 	ldrb r1,[vdpptr,#vdpNameTable]
 	orr r1,r1,r1,lsl#16
 	mov r2,#GAME_HEIGHT/2
@@ -827,8 +827,8 @@ VDPSetMode:
 	add r0,r0,#1
 	str r0,[vdpptr,#vdpVBlEndLine]
 	ldrb r0,[vdpptr,#vdpNTMask]
-	orreq r0,r0,#0x2
-	bicne r0,r0,#0x2
+	orrne r0,r0,#0x1
+	biceq r0,r0,#0x1
 	strb r0,[vdpptr,#vdpNTMask]
 
 	ldrb r0,[vdpptr,#vdpGGMode]
@@ -1017,14 +1017,18 @@ VDPReg01W:
 	strb r1,[vdpptr,#vdpMode2]
 	b VDPSetMode
 ;@----------------------------------------------------------------------------
-VDPReg02W:
+VDPReg02W:					;@ NameTable offset
 ;@----------------------------------------------------------------------------
+	ldrb r0,[vdpptr,#vdpNTMask]
+	orr r1,r1,r0,lsr#7
+	bic r1,r1,r0,lsl#1
+
 	ldrb r0,[vdpptr,#vdpNameTable]
 	ldrb r2,[vdpptr,#vdpXScroll]
 	strb r1,[vdpptr,#vdpNameTable]
 	b fillRegBuff
 ;@----------------------------------------------------------------------------
-VDPReg03W:						;@ Color Table - offset
+VDPReg03W:					;@ Color Table - offset
 ;@----------------------------------------------------------------------------
 	ldrb r0,[vdpptr,#vdpCTOffset]
 	strb r1,[vdpptr,#vdpCTOffset]
@@ -1038,7 +1042,7 @@ DT_clear:
 	mov r1,#0x40
 	b memclr_
 ;@----------------------------------------------------------------------------
-VDPReg04W:						;@ Pattern Generator Table - offset
+VDPReg04W:					;@ Pattern Generator Table - offset
 ;@----------------------------------------------------------------------------
 	and r1,r1,#7
 	ldrb r0,[vdpptr,#vdpPGOffset]
@@ -1049,12 +1053,12 @@ VDPReg04W:						;@ Pattern Generator Table - offset
 	mov r1,r1,lsl#5
 	b DT_clear
 ;@----------------------------------------------------------------------------
-VDPReg05W:						;@ Sprite Attribute Table - offset
+VDPReg05W:					;@ Sprite Attribute Table - offset
 ;@----------------------------------------------------------------------------
 	strb r1,[vdpptr,#vdpSATOffset]
 	bx lr
 ;@----------------------------------------------------------------------------
-VDPReg06W:						;@ Sprite tiles - offset
+VDPReg06W:					;@ Sprite tiles - offset
 ;@----------------------------------------------------------------------------
 	and r1,r1,#7
 	ldrb r0,[vdpptr,#vdpSPROffset]
@@ -1067,12 +1071,12 @@ VDPReg06W:						;@ Sprite tiles - offset
 	mov r1,#0x10
 	b memclr_
 ;@----------------------------------------------------------------------------
-VDPReg07W:						;@ Backdrop Color
+VDPReg07W:					;@ Backdrop Color
 ;@----------------------------------------------------------------------------
 	strb r1,[vdpptr,#vdpBDColor]
 	bx lr
 ;@----------------------------------------------------------------------------
-VDPReg08W:						;@ Horizontal Scroll register
+VDPReg08W:					;@ Horizontal Scroll register
 ;@----------------------------------------------------------------------------
 	ldrb r0,[vdpptr,#vdpNameTable]
 	ldrb r2,[vdpptr,#vdpXScroll]
@@ -1082,7 +1086,7 @@ fillRegBuff:
 	sub r0,r0,r2,lsl#8
 	ldr r2,[vdpptr,#vdpScanline]	;@ r2=scanline
 	rsbs r1,z80cyc,#12*CYCLE
-	adc r2,r2,#0					;@ Also add carry if cycles <= 12
+	adc r2,r2,#0				;@ Also add carry if cycles <= 12
 	cmp r2,#240
 	movhi r2,#240
 	ldr r1,[vdpptr,#vdpRegWriteLine]
@@ -1090,64 +1094,64 @@ fillRegBuff:
 	strmi r2,[vdpptr,#vdpRegWriteLine]
 
 	add r2,vdpptr,r2,lsl#1
-	add r2,r2,#scrollBuff
+	add r2,r2,#scrollTMapBuff
 sx1:
 	adds r1,r1,#1
-	strhle r0,[r2],#-2				;@ Fill backwards from scanline to lastline
+	strhle r0,[r2],#-2			;@ Fill backwards from scanline to lastline
 	bmi sx1
 	bx lr
 
 ;@----------------------------------------------------------------------------
-VDPReg09W:						;@ Vertical Scroll register
+VDPReg09W:					;@ Vertical Scroll register
 ;@----------------------------------------------------------------------------
 	strb r1,[vdpptr,#vdpYScroll]
 	bx lr
 ;@----------------------------------------------------------------------------
-VDPReg0AW:						;@ HBlank counter value
+VDPReg0AW:					;@ HBlank counter value
 ;@----------------------------------------------------------------------------
 	strb r1,[vdpptr,#vdpCounter]
 	bx lr
 ;@----------------------------------------------------------------------------
-VDPReg0BW:						;@ MD, Mode Set Register No. 3
+VDPReg0BW:					;@ MD, Mode Set Register No. 3
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg0CW:						;@ MD, Mode Set Register No. 4
+VDPReg0CW:					;@ MD, Mode Set Register No. 4
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg0DW:						;@ MD, H Scroll Data Table Base Address
+VDPReg0DW:					;@ MD, H Scroll Data Table Base Address
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg0EW:						;@ MD, tile bit 16 for plane A & B
+VDPReg0EW:					;@ MD, tile bit 16 for plane A & B
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg0FW:						;@ MD, Auto Increment Data
+VDPReg0FW:					;@ MD, Auto Increment Data
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg10W:						;@ MD, Tile maps size.
+VDPReg10W:					;@ MD, Tile maps size.
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg11W:						;@ MD, horizontal split between plane A and window.
+VDPReg11W:					;@ MD, horizontal split between plane A and window.
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg12W:						;@ MD, vertical split between plane A and window.
+VDPReg12W:					;@ MD, vertical split between plane A and window.
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg13W:						;@ MD, DMA length bit 7:0
+VDPReg13W:					;@ MD, DMA length bit 7:0
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg14W:						;@ MD, DMA length bit 15:8
+VDPReg14W:					;@ MD, DMA length bit 15:8
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg15W:						;@ MD, DMA source bit 8:1
+VDPReg15W:					;@ MD, DMA source bit 8:1
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg16W:						;@ MD, DMA source bit 16:9
+VDPReg16W:					;@ MD, DMA source bit 16:9
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg17W:						;@ MD, DMA control
+VDPReg17W:					;@ MD, DMA control
 ;@----------------------------------------------------------------------------
 ;@----------------------------------------------------------------------------
-VDPReg__W:						;@ No reg
+VDPReg__W:					;@ No reg
 ;@----------------------------------------------------------------------------
 	bx lr
 ;@----------------------------------------------------------------------------
@@ -1166,9 +1170,9 @@ VDPDataSMSW:
 	ldr r1,[vdpptr,#vdpAdr]
 	add r2,r1,#0x00040000
 	str r2,[vdpptr,#vdpAdr]
-	str r0,[vdpptr,#vdpBuff]		;@ Write to vdpbuffer and clear vdptoggle.
+	str r0,[vdpptr,#vdpBuff]	;@ Write to vdpbuffer and clear vdptoggle.
 
-	and r2,r2,#0x03					;@ vdpCtrl
+	and r2,r2,#0x03				;@ vdpCtrl
 	cmp r2,#0x03
 	beq CRAMW
 ;@----------------------------------------------------------------------------
@@ -1176,7 +1180,7 @@ VRAMW:
 ;@----------------------------------------------------------------------------
 	ldr r2,[vdpptr,#VRAMPtr]
 	strb r0,[r2,r1,lsr#18]
-	strb rclr,[vdpptr,r1,lsr#23]	;@ Dirty tiles
+	strb rclr,[vdpptr,r1,lsr#23];@ Dirty tiles
 	bx lr
 ;@----------------------------------------------------------------------------
 CRAMW:
@@ -1203,10 +1207,10 @@ VDPDataGGW:
 	ldr r1,[vdpptr,#vdpAdr]
 	add r2,r1,#0x00040000
 	str r2,[vdpptr,#vdpAdr]
-	and r2,r2,#0x03					;@ vdpCtrl
+	and r2,r2,#0x03				;@ vdpCtrl
 	cmp r2,#0x03
 	ldrbeq r2,[vdpptr,#vdpBuff]
-	str r0,[vdpptr,#vdpBuff]		;@ Write to vdpbuffer and clear vdptoggle.
+	str r0,[vdpptr,#vdpBuff]	;@ Write to vdpbuffer and clear vdptoggle.
 
 	bne VRAMW
 ;@----------------------------------------------------------------------------
@@ -1238,7 +1242,7 @@ VDPDataMDW:
 	str r2,[vdpptr,#vdpAdr]
 	strb rclr,[vdpptr,#vdpToggle]	;@ MD doesn't touch the vdpBuff on write
 
-	tst r2,#0x02					;@ vdpCtrl
+	tst r2,#0x02				;@ vdpCtrl
 	beq VRAMW
 ;@----------------------------------------------------------------------------
 CRAMMDW:
@@ -1248,7 +1252,7 @@ CRAMMDW:
 	bne CRAMW
 
 	ldrb r2,[vdpptr,#vdpBuff]
-	str r0,[vdpptr,#vdpBuff]		;@ Write to vdpbuffer and clear vdptoggle.
+	str r0,[vdpptr,#vdpBuff]	;@ Write to vdpbuffer and clear vdptoggle.
 
 	movs r1,r1,lsr#19
 	bxcc lr
@@ -1269,12 +1273,12 @@ WritePalMD:
 //	ldrh r3,[r4,r3]
 //	ldr r2,=EMUPALBUFF+0x100
 	add r2,r2,r1,lsl#1
-//	strh r3,[r2,#0x80]				;@ bgtile palette high prio
+//	strh r3,[r2,#0x80]			;@ bgtile palette high prio
 
 	bic r0,r0,#0x0110
 	bic r0,r0,#0x0001
 	ldrh r0,[r4,r0]
-	strh r0,[r2]					;@ bgtile palette low prio
+	strh r0,[r2]				;@ bgtile palette low prio
 	ldmfd sp!,{r3,r4}
 
 	bx lr
@@ -1290,7 +1294,7 @@ VDPDataTMSW:
 	ldr r1,[vdpptr,#vdpAdr]
 	add r2,r1,#0x00040000
 	str r2,[vdpptr,#vdpAdr]
-	str r0,[vdpptr,#vdpBuff]		;@ Write to vdpbuffer and clear vdptoggle.
+	str r0,[vdpptr,#vdpBuff]	;@ Write to vdpbuffer and clear vdptoggle.
 	b VRAMW
 
 ;@----------------------------------------------------------------------------

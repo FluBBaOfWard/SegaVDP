@@ -10,8 +10,6 @@
 #include "../Shared/nds_asm.h"
 #endif
 
-	.global CHRDecode
-
 	.global rendererInit
 	.global bgFinish
 	.global transferVRAM
@@ -444,11 +442,8 @@ bgM4Frame:
 	subs r3,r3,#1
 	ldmfdmi sp!,{r3-r11,pc}
 
-	ldrb r11,[r8],#16
-	ldrb r10,[vdpptr,#vdpNTMask]
+	ldrb r10,[r8],#8*2
 	movs r10,r10,lsr#1
-	orrcs r11,r11,#0x01
-	ands r10,r10,r11,lsr#1
 	orr r10,lr,r10,lsl#5
 	biccc r10,r10,#0x10
 
@@ -464,8 +459,8 @@ bgM4Frame:
 	add r9,r1,r10,lsl#6
 	add r7,r0,lr,lsl#6
 
-	add lr,lr,#1
 	ldr r10,[vdpptr,#vdpScrollMask]
+	add lr,lr,#1
 	cmp lr,r10,lsr#3
 	subpl lr,lr,r10,lsr#3
 
@@ -473,7 +468,7 @@ bgM4Row:
 	ldr r10,[r9],#4				;@ Read from MasterSystem Tilemap RAM
 
 	and r11,r4,r10,lsr#11
-	orr r11,r11,r4,lsl#1			;@ Bgr color 0x30 & 0x40
+	orr r11,r11,r4,lsl#1		;@ Bgr color 0x30 & 0x40
 	str r11,[r7,r4,lsr#4]		;@ Write to GBA/NDS Tilemap RAM, BGR color
 
 	tst r4,r10,lsl#4			;@ Shift out top P bit, test low P bit.
@@ -516,11 +511,12 @@ bgFinish:					;@ End of frame...
 	ldr r5,=0xF000F000
 	ldr r6,=0x000003FF
 	ldrb lr,[vdpptr,#vdpYScrollBak1]
-	and r10,lr,#7
+//	and r10,lr,#7
 	mov lr,lr,lsr#3
-	rsbs r11,r10,#4
-	movmi r11,#0
-	add r8,vdpptr,#TMapBuff
+//	rsbs r11,r10,#4
+//	movmi r11,#0
+	mov r11,#0
+	add r8,vdpptr,#scrollTMapBuff
 	ldrb r11,[r8,r11,lsl#1]!
 	ldrb r10,[vdpptr,#vdpHeightMode]
 	ldr r1,[vdpptr,#VRAMPtr]

@@ -80,8 +80,7 @@ vdpSpriteTileBuffer: .space 0x20
 vdpSpritePosBuffer:	.space 8*4
 vdpJumpTable:		.space 0x20*4	;@
 vdpCtrlTable:		.space 4*4	;@
-TMapBuff:
-scrollBuff:			.space 320*2	;@ Horizontal scroll-/Tilemap-buffer.
+scrollTMapBuff:		.space 320*2	;@ Horizontal scroll-/Tilemap-buffer.
 VRAMPtr:			.long 0
 vdpModesPtr:		.long 0
 irqRoutine:			.long 0		;@
