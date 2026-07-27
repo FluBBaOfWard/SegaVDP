@@ -309,7 +309,7 @@ tileLoop2_2:
 	movs r3,r2,lsr#4
 	mulne r3,r0,r3
 	eors r0,r0,r8
-	andnes r2,r2,#0x0F
+	andsne r2,r2,#0x0F
 	mlane r3,r2,r0,r3
 	str r3,[r7,r1,ror#32-7]
 	adds r1,r1,#0x08000000
