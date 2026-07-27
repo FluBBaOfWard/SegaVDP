@@ -10,6 +10,7 @@
 #include "../ARMZ80/ARMZ80mac.h"
 #include "SegaVDP.i"
 
+	.global VDPInit
 	.global VDPReset
 	.global VDPSetSprScan
 	.global VDPScanlineBPReset
@@ -66,7 +67,7 @@
 #endif
 	.align 2
 ;@----------------------------------------------------------------------------
-VDPReset:	;@ Called from gfxReset, r0=vdp/tv type, r1=irq routine, r2 = debounce routine, r12 = vdpptr.
+VDPInit:	;@ Called from gfxInit, r0=vdp/tv type, r1=irq routine, r2 = debounce routine, r12 = vdpptr.
 ;@----------------------------------------------------------------------------
 	stmfd sp!,{lr}
 
@@ -83,15 +84,22 @@ VDPReset:	;@ Called from gfxReset, r0=vdp/tv type, r1=irq routine, r2 = debounce
 	moveq r2,#0						;@ TMS9918 doesn't have debounce circuit
 	str r2,[vdpptr,#debounceRoutine]
 
+	bl VDPMakeModes
+	bl VDPSetupType
+
+	ldmfd sp!,{pc}
+;@----------------------------------------------------------------------------
+VDPReset:	;@ Called from gfxReset
+;@----------------------------------------------------------------------------
+	stmfd sp!,{lr}
+
 	add r0,vdpptr,#vdpState
 	mov r1,#(vdpRegisters-vdpState)/4
 	bl memclr_						;@ Clear VDP state
 
-	bl VDPMakeModes
-	bl VDPSetupType
 	bl VDPRegistersReset
 	bl VDPVRAMReset
-	bl VDPSetDefaultPalette			;@ Don't clear palette when loading a savestate.
+	bl VDPSetDefaultPalette
 	bl VDPScanlineBPReset
 	bl VDPClearDirtyTiles
 	bl VDPNewFrame
