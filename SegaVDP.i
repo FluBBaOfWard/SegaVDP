@@ -166,6 +166,7 @@ vdpBgrMapOfs0:		.long 0
 vdpBgrMapOfs1:		.long 0
 vdpBgrTileOfs:		.long 0
 vdpSprTileOfs:		.long 0
+vdpPaletteOfs:		.long 0
 vdpSize:
 
 ;@----------------------------------------------------------------------------

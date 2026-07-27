@@ -121,6 +121,7 @@ typedef struct {
 	u32 bgrMapOfs1;
 	u32 bgrTileOfs;
 	u32 sprTileOfs;
+	u32 paletteOfs;
 } SegaVDP;
 
 

@@ -476,7 +476,7 @@ bgM4Row:
 	and r11,r10,r5,lsr#3
 	add r10,r10,r11				;@ XY flip + color.
 
-	add r10,r10,r2				;@ New tile offset
+	add r10,r10,r2				;@ New tile/pal offset
 	str r10,[r7,#0x800]			;@ Write to GBA/NDS Tilemap RAM, behind sprites
 	biccc r10,r10,r6,lsl#16
 	biceq r10,r10,r6
@@ -504,9 +504,10 @@ bgFinish:					;@ End of frame...
 	mov r1,#BG_GFX
 	add r0,r1,r0,lsl#3
 	ldr r2,[vdpptr,#vdpBgrTileOfs]
+	ldr r3,[vdpptr,#vdpPaletteOfs]
 	and r2,r2,#0x3FC0
-	mov r2,r2,lsr#5
 	orr r2,r2,r2,lsl#16
+	orr r2,r3,r2,lsr#5
 	ldr r4,=0x00010001
 	ldr r5,=0xF000F000
 	ldr r6,=0x000003FF
