@@ -1045,8 +1045,7 @@ VDPReg03W:					;@ Color Table - offset
 	bxeq lr
 DT_clear:
 	and r1,r1,#0x80
-	add r0,vdpptr,#dirtyTiles
-	add r0,r0,r1,lsl#1
+	add r0,vdpptr,r1,lsl#1		;@ dirtyTiles first in VDP
 	mov r1,#0x40
 	b memclr_
 ;@----------------------------------------------------------------------------
@@ -1056,7 +1055,7 @@ VDPReg04W:					;@ Pattern Generator Table - offset
 	ldrb r0,[vdpptr,#vdpPGOffset]
 	strb r1,[vdpptr,#vdpPGOffset]
 	eor r0,r0,r1
-	ands r0,r0,#4
+	ands r0,r0,#6
 	bxeq lr
 	mov r1,r1,lsl#5
 	b DT_clear
@@ -1074,8 +1073,7 @@ VDPReg06W:					;@ Sprite tiles - offset
 	cmp r0,r1
 	bxeq lr
 
-	add r0,vdpptr,#dirtyTiles
-	add r0,r0,r1,lsl#6
+	add r0,vdpptr,r1,lsl#6		;@ dirtyTiles first in VDP
 	mov r1,#0x10
 	b memclr_
 ;@----------------------------------------------------------------------------

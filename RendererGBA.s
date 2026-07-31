@@ -121,7 +121,6 @@ transferVRAM:
 ;@----------------------------------------------------------------------------
 transferVRAM_m0:
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x1C0
 	add r11,r5,r3,lsl#6
 	sub r11,r11,r1,lsr#1
 	ldrb r9,[vdpptr,r3,lsl#1]
@@ -129,7 +128,8 @@ transferVRAM_m0:
 	strb r0,[vdpptr,r3,lsl#1]
 	orr r9,r9,r9,lsl#8
 	orr r9,r9,r9,lsl#16
-	sub r7,r7,r1,lsl#7
+	and r2,r1,#0x180
+	sub r7,r7,r2,lsl#7			;@ r7 = Destination
 tileLoop0_0:
 	ldr r0,=0x01010101			;@ Dirtytiles mode 0 bgr.
 	ldr r10,[vdpptr,r1]			;@ DirtyTiles are first in VDP struct
@@ -151,13 +151,10 @@ tileLoop0_0:
 	tst r1,#0x3F
 	bne tileLoop0_0
 
-	sub r1,r1,#0x40
-	add r7,r7,r1,lsl#7
 	b tileLoopSpr
 ;@----------------------------------------------------------------------------
 transferVRAM_m1:
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x1C0
 	sub r7,r7,r1,lsl#7
 	ldr r9,=0x02020202			;@ Dirtytiles mode 1 bgr.
 tileLoop1_0:
@@ -217,13 +214,10 @@ tileLoop2_0:
 	cmp r0,#0xC0
 	bne tileLoop2_0
 
-	sub r1,r1,#0xC0
-	add r7,r7,r1,lsl#7
 	b tileLoopSpr
 ;@----------------------------------------------------------------------------
 transferVRAM_m3:
 ;@----------------------------------------------------------------------------
-	and r1,r1,#0x1C0
 	ldr r9,=0x08080808			;@ Dirtytiles mode 3 bgr.
 	sub r7,r7,r1,lsl#9
 tileLoop3_0:
@@ -532,8 +526,8 @@ bgFinish:					;@ End of frame...
 	cmp r10,#VDPMODE_5
 	beq bgMode5
 
-	ldrb r7,[vdpptr,#vdpPGOffsetBak1]
-	and r7,r7,#3
+	ldrb r5,[vdpptr,#vdpPGOffsetBak1]
+	and r7,r5,#3
 	eor r7,r7,#3
 	orr r7,r7,r7,lsl#16
 	mov r7,r7,lsl#8
@@ -545,8 +539,9 @@ bgFinish:					;@ End of frame...
 	mov r6,#0
 	cmp r10,#VDPMODE_2
 	moveq r6,r4,lsl#8			;@ 0x01000100
-	cmpne r10,#VDPMODE_0
 	beq bgMode02
+	cmp r10,#VDPMODE_0
+	beq bgMode0
 	mov r3,#24
 	cmp r10,#VDPMODE_3
 	beq bgMode3
@@ -589,6 +584,10 @@ bgModeB:
 ;@	r6 = 0x00010001/0x00000000
 ;@	r7 = 0x0M000M00
 ;@----------------------------------------------------------------------------
+bgMode0:						;@ Mode 0
+	and r5,r5,#1
+	orr r5,r5,r5,lsl#16
+	add r2,r2,r5,lsl#8
 bgMode02:						;@ Mode 0 & 2
 	orr r2,r2,r4,lsl#14			;@ Palette 4
 	mov r3,#3
