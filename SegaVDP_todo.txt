@@ -7,6 +7,7 @@ SegaVDP To do
 	What number is HBlank IRQ set to on reset for SMS 1 VDP?
 	Move earlyFrame & endFrame to SegaVDP.
 
+	Fix palette handling on GG when switching between GG & SMS mode.
 	GG has a latch/buffer for palette writing thats not related to VRAM buffer?
 
 	Is screen centered in SMS mode on GG when left border is on?

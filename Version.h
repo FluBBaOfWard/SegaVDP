@@ -1,1 +1,1 @@
-#define SEGAVDPVERSION "V0.7.2"
+#define SEGAVDPVERSION "V0.7.3"

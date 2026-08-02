@@ -1046,17 +1046,19 @@ VDPReg03W:					;@ Color Table - offset
 DT_clear:
 	and r1,r1,#0x80
 	add r0,vdpptr,r1,lsl#1		;@ dirtyTiles first in VDP
-	mov r1,#0x40
+	mov r1,#0x30
 	b memclr_
 ;@----------------------------------------------------------------------------
 VDPReg04W:					;@ Pattern Generator Table - offset
 ;@----------------------------------------------------------------------------
 	and r1,r1,#7
-	ldrb r0,[vdpptr,#vdpPGOffset]
+	and r2,r1,#3
+	add r2,r2,vdpptr
+	ldrb r0,[r2,#vdpPGOffsetCache]
 	strb r1,[vdpptr,#vdpPGOffset]
-	eor r0,r0,r1
-	ands r0,r0,#6
+	eors r0,r0,r1
 	bxeq lr
+	strb r1,[r2,#vdpPGOffsetCache]
 	mov r1,r1,lsl#5
 	b DT_clear
 ;@----------------------------------------------------------------------------

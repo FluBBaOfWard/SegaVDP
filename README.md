@@ -1,4 +1,4 @@
-# SegaVDP V0.7.2
+# SegaVDP V0.7.3
 
 Sega 8bit VDP emulator for GBA/NDS.
 

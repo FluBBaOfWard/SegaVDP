@@ -2,6 +2,9 @@ SegaVDP revision history
 -=-=-=-=-=-=-=-=-=-=-=-=-
 
 
+V0.7.3 - 2026-08-02 (FluBBa)
+	Added caching of tiles for Mode0.
+
 V0.7.2 - 2026-07-27 (FluBBa)
 	Added field for Sprite Scanning.
 	Optimized writing to VRAM/CRAM.

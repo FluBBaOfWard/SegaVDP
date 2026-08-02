@@ -147,8 +147,10 @@ vdpScrollMask:		.long 0
 vdpSprStop:			.long 0
 vdpLineIRQ:			.long 0
 vdpNextLineChange:	.long 0
-					.skip 0x08
 vdpStateEnd:
+
+vdpPGOffsetCache:	.space 0x04
+vdpCTOffsetCache:	.space 0x04
 
 vdpStateTable:
 vdpZeroLine:		.long 0,0

@@ -103,7 +103,9 @@ typedef struct {
 	u32 sprStop;
 	u32 lineIRQ;
 	u32 nextLineChange;
-	u32 padding3[2];
+// VDP State End
+	u8 pgOffsetCache[4];
+	u8 ctOffsetCache[4];
 
 //vdpStateTable:
 	u32 zeroLine[2];
